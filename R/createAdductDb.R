@@ -9,12 +9,13 @@
 createDb <- function(compoundList, dbName, adductList) {
 
   source("R\\adductCalc.R")
+  source("R\\formulaUtils.R")
 
   #add some sanity checks here
   # TODO: does the data frame contain the right columns?
 
   #generate filename
-  dbFileName <- paste0(dbFileName, ".sqlite")
+  dbFileName <- paste0(dbName, ".sqlite")
 
   #get adduct calculation list
   adductCalc <- getAdductCalc()
@@ -26,12 +27,13 @@ createDb <- function(compoundList, dbName, adductList) {
   for(adduct in adductList) {
 
     #generate list
-    clipboard <- data.frame(metaboliteID = "",
+    clipboard <- data.frame(metaboliteID = compoundList$id,
                             adductType = adduct,
-                            adductMass = (compoundList$exactMass * adductCalc[[adduct]][1]) + adductCalc[[adduct]][2],
-                            neutralMass = compoundList$exactMass,
+                            adductMass = compoundList$exactmass * as.numeric(adductCalc[[adduct]][1]) + as.numeric(adductCalc[[adduct]][2]),
+                            neutralMass = compoundList$exactmass,
                             neutralFormula = compoundList$formula,
-                            metaboliteName = str_c(compoundList$name, adduct, sep = " "),
+                            ionFormula = unlist(lapply(compoundList$formula, calcAdductFormula, adduct = adduct)),
+                            metaboliteName = stringr::str_c(compoundList$name, adduct, sep = " "),
                             inchkey = compoundList$inchikey)
 
     #add to list
@@ -41,7 +43,7 @@ createDb <- function(compoundList, dbName, adductList) {
 
   #upload to temp DB
   mydb <- DBI::dbConnect(RSQLite::SQLite(), dbFileName)
-  DBI::dbWriteTable(mydb, "adducts", dbupload)
+  DBI::dbWriteTable(mydb, "adducts", dbupload, overwrite = TRUE)
 
   #disconnect DB
   DBI::dbDisconnect(mydb)
