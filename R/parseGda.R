@@ -1,3 +1,9 @@
+#' This funtion parses a Genedata .gda file and returns three data frames containing the data and row and column annotations
+#'
+#' @param pathTofile
+#' @return Returns a list with the three different dataframes, index 1 is the data, index 2 column annotation, index 3 row annotations
+#' @examples
+#' xxx
 readGdaFile <- function(pathToFile) {
 
   #create data frames for data

@@ -1,5 +1,14 @@
-
+#' This function creates an SQLite database based on a given compound list. Minimum input is a metabolite name ($name), an exact mass ($exactMass), a formula ($formula) and an InChIKey ($inchikey)
+#'
+#' @param compoundList List of compounds that shall be added to DB
+#' @param dbName A name for the database file
+#' @param adductList Vector with adducts that shall be covered in the DB.
+#' @return Returns the filename of the generated database
+#' @examples
+#' xxx
 generateIsoPattern <- function(ionFormula, adduct, plotit = TRUE, treshold = 0.01, resolution = 50000) {
+
+  require(MSnbase)
 
   # get adduct calculation list
   adductCalc <- getAdductCalc()
@@ -29,8 +38,16 @@ generateIsoPattern <- function(ionFormula, adduct, plotit = TRUE, treshold = 0.0
                   detect="centroid",
                   plotit=plotit)
 
+  centro <- as.data.frame(centro)
+  colnames(centro) <- c("mz", "int")
+
+  isotopeSpectrum <- new("Spectrum1",
+                         mz = centro$mz,
+                         intensity = centro$int,
+                         centroided = TRUE)
+
   # return values
-  return(centro)
+  return(isotopeSpectrum)
 }
 
 
