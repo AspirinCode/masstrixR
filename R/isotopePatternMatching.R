@@ -12,10 +12,7 @@ generateIsoPattern <- function(ionFormula, adduct, plotit = TRUE, treshold = 0.0
 
   # get adduct calculation list
   adductCalc <- getAdductCalc()
-
   charge <- as.numeric(adductCalc[[adduct]][5])
-
-  print(charge)
 
   # pre-check generated ion formula
   checked<-enviPat::check_chemform(isotopes, ionFormula)
@@ -38,9 +35,9 @@ generateIsoPattern <- function(ionFormula, adduct, plotit = TRUE, treshold = 0.0
                   detect="centroid",
                   plotit=plotit)
 
+  # create Spectrum1 object from it
   centro <- as.data.frame(centro)
   colnames(centro) <- c("mz", "int")
-
   isotopeSpectrum <- new("Spectrum1",
                          mz = centro$mz,
                          intensity = centro$int,
@@ -49,6 +46,3 @@ generateIsoPattern <- function(ionFormula, adduct, plotit = TRUE, treshold = 0.0
   # return values
   return(isotopeSpectrum)
 }
-
-
-
