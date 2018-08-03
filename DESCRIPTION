@@ -12,6 +12,6 @@ LazyData: true
 Imports:
 	DBI (>= 1.0.0),
 	ggplot2 (>= 2.2.1),
-	Msnbase
+	MSnbase
 Suggests:
 	testthat

@@ -2,12 +2,12 @@
 # source("R\\parseGda.R")
 #
 # #read HMDB file and create DB
-# compoundList <- data.frame(read.table("DBs\\Txt\\lipid_test.txt", sep = "\t", header = T, stringsAsFactors = F, comment.char = " "))
+#compoundList <- data.frame(read.table("DBs\\Txt\\ymdb_20180731.txt", sep = "\t", header = T, stringsAsFactors = F, comment.char = ""))
 # createDb(compoundList, "DBs\\SQLite\\wormjam_test_pos.sqlite", c("M+H", "M+Na"))
 #
 # #read peaklist
 # #peakList <- data.frame(read.table("data\\examplePeaks.txt", sep = "\t", header = T, stringsAsFactors = F, comment.char = " "))
-# peakList <- readGdaFile("data\\CelegansTandemPos.gda")
+#readGdaFile("example\\NaAcHILICPos_Cluster.gda")
 #
 # peakList <- as.data.frame(read.table("clipboard", header = T, sep = "\t"))
 #

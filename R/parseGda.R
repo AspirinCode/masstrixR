@@ -12,7 +12,7 @@ readGdaFile <- function(pathToFile) {
   clusterNames <- NULL
 
   # read file line by line
-  con <- file(filepath, "r")
+  con <- file(pathToFile, "r")
 
   while(TRUE) {
     line = readLines(con, n = 1)
@@ -29,7 +29,7 @@ readGdaFile <- function(pathToFile) {
       content <- stringr::str_split(line, "\t")[[1]]
 
       #isolate sample names and add to ColumnDf
-      SampleNames <- as.character(content[2:(length(content) - 13)])
+      SampleNames <- as.character(content[2:(length(content) - noOfRowAnno)])
       colAnnoDf <- data.frame(SampleNames = character(length(content) - noOfRowAnno -1))
       colAnnoDf["SampleNames"] <- SampleNames
 
@@ -65,7 +65,7 @@ readGdaFile <- function(pathToFile) {
       clusterNames <- c(clusterNames, content[1])
 
       #get peak values
-      peakValues <- as.numeric(content[2:(length(content) - 13)])
+      peakValues <- as.numeric(content[2:(length(content) - noOfRowAnno)])
       rowAnnotations <- content[(length(content) - noOfRowAnno + 1):length(content)]
 
       #add to rowAnnoDf and dataDf
@@ -95,6 +95,11 @@ readGdaFile <- function(pathToFile) {
     } else if(grepl("\\[C|c\\]", name))
       colAnnoDf[name] <- as.factor(unlist(colAnnoDf[name]))
   }
+
+  # change the m/z column names
+  names(rowAnnoDf)[names(rowAnnoDf) == 'm/z'] <- 'm.z'
+  rowAnnoDf$m.z <- as.numeric(rowAnnoDf$m.z)
+
 
   return(list(dataDf, colAnnoDf, rowAnnoDf))
 

@@ -8,9 +8,6 @@
 #' xxx
 createDb <- function(compoundList, dbName, adductList) {
 
-  source("R\\adductCalc.R")
-  source("R\\formulaUtils.R")
-
   #add some sanity checks here
   # TODO: does the data frame contain the right columns?
 

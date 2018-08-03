@@ -8,7 +8,7 @@ calcAdductFormula <- function(molecularFormula, adduct) {
   # get adduct calculation list
   adductCalc <- getAdductCalc()
 
-  print(paste0(molecularFormula, "_", adduct))
+  #print(paste0(molecularFormula, "_", adduct))
 
 
   # molecule formula parsed
@@ -30,7 +30,7 @@ calcAdductFormula <- function(molecularFormula, adduct) {
   adductFormulaList <- sapply(atoms, function(x) NULL)
 
   for(i in 1:length(adductFormulaList)) {
-    print(names(adductFormulaList[i]))
+    #print(names(adductFormulaList[i]))
 
     atom <- names(adductFormulaList[i])
 

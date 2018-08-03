@@ -51,7 +51,7 @@ mzSearch <-function(peakList, dbFileName, mode = "onDisk", mzTol = 0.005, tolTyp
     annotation <- DBI::dbFetch(resultSet)
     if(nrow(annotation) > 0) {
       ms1annotation <- rbind.data.frame(ms1annotation, cbind.data.frame(peakList[i,], annotation))
-      print(cbind.data.frame(peakList[i,], annotation))
+      #print(cbind.data.frame(peakList[i,], annotation))
     }
 
     #clear result
@@ -82,9 +82,6 @@ mzSearch <-function(peakList, dbFileName, mode = "onDisk", mzTol = 0.005, tolTyp
 #search in a pre-defined database
 mzLookUp <- function(peakList, compoundList, adductList, mzTol = 0.005, tolType = "abs") {
 
-  source("R\\adductCalc.R")
-  source("R\\formulaUtils.R")
-
   #add some sanity checks here
   # TODO: does the data frame contain the right columns?
 
@@ -105,7 +102,9 @@ mzLookUp <- function(peakList, compoundList, adductList, mzTol = 0.005, tolType 
                             neutralFormula = compoundList$formula,
                             ionFormula = unlist(lapply(compoundList$formula, calcAdductFormula, adduct = adduct)),
                             metaboliteName = stringr::str_c(compoundList$name, adduct, sep = " "),
-                            inchkey = compoundList$inchikey)
+                            inchkey = compoundList$inchikey,
+                            inchi = compoundList$inchi,
+                            smiles = compoundList$smiles)
 
     #add to list
     dbupload <- rbind.data.frame(dbupload, clipboard)
@@ -132,7 +131,7 @@ mzLookUp <- function(peakList, compoundList, adductList, mzTol = 0.005, tolType 
     annotation <- DBI::dbFetch(resultSet)
     if(nrow(annotation) > 0) {
       ms1annotation <- rbind.data.frame(ms1annotation, cbind.data.frame(peakList[i,], annotation))
-      print(cbind.data.frame(peakList[i,], annotation))
+      #print(cbind.data.frame(peakList[i,], annotation))
     }
 
     #clear result
