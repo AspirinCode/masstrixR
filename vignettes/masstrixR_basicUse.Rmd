@@ -73,6 +73,11 @@ If no persistent .sqlite file is needed or only a fast lookup of specific m/z va
 ```{r}
 # perform m/z look up
 annotationResultsLookup <- mzLookUp(rowAnno, compoundList, mzTol = 0.005, tolType = "abs", c("M+H", "M+Na"))
+
+
+# read YMDB text file and create example .sqlite file
+compoundListAdducts <- data.frame(read.table("..\\DBs\\Txt\\ymdb_20180731_adducts.txt", sep = "\t", header = T, stringsAsFactors = F, comment.char = ""))
+annotationResultsLookupMisc <- mzLookUpMiscAdducts(rowAnno, compoundListAdducts, mzTol = 0.005, tolType = "abs")
 ```
 
 
