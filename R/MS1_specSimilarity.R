@@ -1,0 +1,8 @@
+isoPatternSimilarty <- function() {
+
+}
+
+
+isoPatternSimilartyRCDK <- function() {
+
+}
