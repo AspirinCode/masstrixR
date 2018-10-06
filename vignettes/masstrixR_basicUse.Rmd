@@ -46,7 +46,7 @@ getAdductNames()
 adducts <- c("M+H", "M+Na")
 
 # create SQLite DB
-createDb(compoundList, "..\\DBs\\SQLite\\ymdb_20180731_MH_MNa", adducts)
+dbFileName <- createDb(compoundList, "..\\DBs\\SQLite\\ymdb_20180731_MH_MNa", adducts)
 ```
 
 ## Annotation of LC-MS data
@@ -62,7 +62,7 @@ rowAnno <- exampleGDA[[3]]
 rowAnno$ClusterName <- row.names(rowAnno)
 
 #annotate
-annotationResults <- mzSearch(rowAnno, "..\\DBs\\SQLite\\ymdb_20180731_MH_MNa.sqlite", mzTol = 0.005, tolType = "abs")
+annotationResults <- mzSearch(rowAnno, dbFileName, mzTol = 0.005, mzTolType = "abs")
 
 ```
 
@@ -72,12 +72,7 @@ If no persistent .sqlite file is needed or only a fast lookup of specific m/z va
 
 ```{r}
 # perform m/z look up
-annotationResultsLookup <- mzLookUp(rowAnno, compoundList, mzTol = 0.005, tolType = "abs", c("M+H", "M+Na"))
-
-
-# read YMDB text file and create example .sqlite file
-compoundListAdducts <- data.frame(read.table("..\\DBs\\Txt\\ymdb_20180731_adducts.txt", sep = "\t", header = T, stringsAsFactors = F, comment.char = ""))
-annotationResultsLookupMisc <- mzLookUpMiscAdducts(rowAnno, compoundListAdducts, mzTol = 0.005, tolType = "abs")
+annotationResultsLookup <- mzLookUp(rowAnno, compoundList, adductList = c("M+H", "M+Na"), mzTol = 0.005, tolType = "abs")
 ```
 
 
