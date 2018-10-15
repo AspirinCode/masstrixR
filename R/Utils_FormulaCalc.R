@@ -142,3 +142,20 @@ generateChemFormula <- function(parsedChemFormula) {
   # return formula
   return(chemFormulaRecon)
 }
+
+
+#' This function generates a chemical formula from a named vector of elemental counts
+#'
+#' @return Single string with chemical formula
+#' @examples
+#' parseChemFormula("C6H12O6")
+harmonizeFormula <- function(chemFormula) {
+
+  # parse and generate
+  parsedChemFormula <- parseChemFormula(chemFormula)
+  chemFormula <- generateChemFormula(parsedChemFormula)
+
+  return(chemFormula)
+
+
+}

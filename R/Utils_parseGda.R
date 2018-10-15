@@ -104,3 +104,62 @@ readGdaFile <- function(pathToFile) {
   return(list(dataDf, colAnnoDf, rowAnnoDf))
 
 }
+
+
+###
+# function to read pmt
+###
+readPmt <- function(pathToFile) {
+
+  # read file line by line
+  con <- file(pathToFile, "r")
+
+  # create empty DF
+  data <- data.frame()
+
+  while(TRUE) {
+    line = readLines(con, n = 1)
+
+    #exit loop
+    if(length(line) == 0) {
+      break
+    }
+
+    if(!grepl("^Cluster", line)) {
+
+      # split header line and get sample names
+      sampleNames <- stringr::str_split(line, "\t")[[1]]
+      sampleNames <- sampleNames[2:length(sampleNames)]
+
+    } else if(grepl("^Cluster", line)) {
+      #print(line)
+      content <- stringr::str_split(line, "\t")[[1]]
+
+      data <- rbind.data.frame(data, cbind.data.frame(sampleName = sampleNames,
+                                                      content = content[2:(length(content)-1)],
+                                                      cluster = content[1]))
+
+      # print(cbind.data.frame(cluster = content[1],
+      #                        sampleNames = sampleNames,
+      #                        content = content[2:length(content)]))
+    } else {
+
+    }
+
+
+  }
+
+  # close connection to file
+  close(con)
+
+  # filter empty fields
+  data <- data[which(!data$content == ""),]
+
+  # stretch data
+  data <- tidyr::separate_rows(data)
+
+
+  return(data)
+
+}
+

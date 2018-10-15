@@ -32,3 +32,13 @@
 #            zzz = "character"
 #          ),
 #          contains = c("Spectrum1", "ConsolidatedSpectrum2"))
+
+
+setClass("isoPatternSpectrum",
+         representation = representation(
+           monoMz = "numeric",
+           featureId = "character",
+           sample = "character",
+           formula = "character"),
+         contains = c("Spectrum1")
+         )

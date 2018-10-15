@@ -13,6 +13,8 @@ Imports:
 	ggplot2 (>= 2.2.1),
 	MSnbase (>= 2.6.3),
 	enviPat (>= 2.2),
-	stringr (>= 1.3.1)
+	stringr (>= 1.3.1),
+	tidyr,
+	dplyr
 Suggests:
 	testthat

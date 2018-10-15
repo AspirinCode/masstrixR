@@ -61,12 +61,14 @@ annotationResultsLookup <- mzLookUp(clusterRowAnno[c("cluster","m.z", "RT")], co
 
 ## Perform isotope pattern matching
 
-
 ```{r}
+# create empty list
+isoPatternList <- list()
+
 # iterate through annotation results
-for(i in 1:nrow(annotationResultsLookup)) {
+for(i in 1:nrow(clusterRowAnno)) {
   
-  annotatedCluster <- annotationResultsLookup$cluster[i]
+  annotatedCluster <- clusterRowAnno$cluster[i]
   
   # some required variables
   intFinal <- vector()
@@ -81,39 +83,74 @@ for(i in 1:nrow(annotationResultsLookup)) {
   # get m/z values
   mz <- peaksRowAnno$m.z[which(peaksRowAnno$Peak %in% peaks)]
   
-    # get intensity values from each sample and use only the pattern with highest TIC
-  for(sample in sampleNames) {
-
-    int <- peaksData[peaks,sample]
-    int[is.na(int)] <- 0
-    
-    if(sum(int) > tic) {
-      intFinal <- int
-    }
-    
-
-  }
+  peakList <- cbind.data.frame(peaksData[peaks,], mz)
   
-  # plot the final isotope pattern
-  plot(mz, intFinal, type = "h", ylim = c(0, max(intFinal)))
-  
-  # create Spectrum1 object from measured data
-  measured <- new("Spectrum1",
-                mz = mz,
-                intensity = intFinal,
-                centroided = TRUE)
-  
-  # predict theoretical spectrum
-  theoretical <- generateIsoPattern(annotationResultsLookup$ionFormula[i], annotationResultsLookup$adductType[i], plotit = FALSE)
-  
-  annotationResultsLookup$isoMatch[i] <- 1000 - compareSpectra(measured, theoretical, fun = "dotproduct") * 1000
+  # get intensity values from each sample and use only the pattern with highest TIC
+  isoPatternList <- c(isoPatternList, reconstructIsoPattern(peakList, "highestTic"))
   
 }
 
+# iterate over annotation results
+for(i in 1:nrow(annotationResultsLookup)) {
+  
+  # predict iso pattern
+  predicted <- generateIsoPattern(annotationResultsLookup$ionFormula[i], annotationResultsLookup$adductType[i], plotit = FALSE)
+  
+  measured <- isoPatternList[unlist(lapply(isoPatternList, function(x) {return(x@featureId)})) == annotationResultsLookup$cluster[i]][[1]]
+  
+  annotationResultsLookup$isoMatch[i] <- 1000 - compareSpectra(measured, predicted, fun = "dotproduct") * 1000
+}
 
 ```
 
+## prepare for SIRIUS output
+
 ```{r}
+# read peak match table and filter only peaks handled in this example
+peakMatchTable <- readPmt("..\\example\\NaAc_Test.pmt")
+peakMatchTable <- peakMatchTable[which(peakMatchTable$cluster %in% clusterRowAnno$cluster),]
+
+# iterate over samples
+for(sample in sampleNames) {
+  
+  # read fitting mgf file
+  ms2data <- readMgfData(paste0("..\\example\\NaAcHILICPos\\", sample, ".mgf"))
+  
+  #get all Ms2 spectra
+  ms2 <- spectra(filterMsLevel(ms2data, msLevel = 2))
+  
+  
+  for(i in 1:nrow(peakMatchTable[which(peakMatchTable$sampleName == sample),])) {
+    scanIndex <- peakMatchTable$content[i]
+    singleSpec <- ms2[which(unlist(lapply(ms2, function(x) {return(x@scanIndex)})) == scanIndex)]
+    
+    print(singleSpec)
+  }
+  
+}
+
+# iterate over iso pattern
+for(isoPattern in isoPatternList) {
+  print(isoPattern@featureId)
+  print(isoPattern@sample)
+  print(isoPattern@monoMz)
+}
+
+
+[1] "Cluster_2996"
+[1] "NaAc_StdMix_1-B,1_05_19682"
+[1] 245.0953329
+
+
+
+ms2data <-  readMgfData(paste0("..\\example\\NaAcHILICPos\\", "NaAc_StdMix_1-B,1_05_19682", ".mgf"))
+
+#get all Ms2 spectra
+ms2 <- spectra(filterMsLevel(ms2data, msLevel = 2))
+
+scanIndex <- peakMatchTable$content[which(peakMatchTable$sampleName == "NaAc_StdMix_1-B,1_05_19682" &  peakMatchTable$cluster == "Cluster_2996")]
+
+writeSirius(isoPattern, singleSpec[[1]], "test.mgf")
 
 ```
 
