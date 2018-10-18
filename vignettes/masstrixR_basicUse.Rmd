@@ -27,7 +27,7 @@ Header names have to be exactly the same as stated above.
 library(masstrixR)
 
 # read YMDB text file and create example .sqlite fil
-compoundList <- data.frame(read.table("..\\DBs\\Txt\\chebi_20181015.txt", sep = "\t", header = T, stringsAsFactors = F, comment.char = "_"))
+compoundList <- data.frame(read.table("..\\DBs\\Txt\\ymdb_20180731.txt", sep = "\t", header = T, stringsAsFactors = F, comment.char = "_"))
 
 #head(compoundList)
 ```
@@ -46,7 +46,7 @@ getAdductNames()
 adducts <- c("M+H", "M+Na")
 
 # create SQLite DB
-dbFileName <- createDb(compoundList, "..\\DBs\\SQLite\\chebi_20181015_MH_MNa", adducts)
+dbFileName <- createDb(compoundList, "..\\DBs\\SQLite\\ymdb_20180731_MH_MNa", adducts, extId = TRUE)
 ```
 
 ## Annotation of LC-MS data

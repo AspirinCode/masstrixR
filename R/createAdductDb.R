@@ -6,7 +6,7 @@
 #' @return Returns the filename of the generated database
 #' @examples
 #' xxx
-createDb <- function(compoundList, dbName, adductList = NA, rt = FALSE, ccs = FALSE, ccsType = "DT") {
+createDb <- function(compoundList, dbName, adductList = NA, rt = FALSE, ccs = FALSE, ccsType = "DT", extId = FALSE) {
 
   ################################################################################################################################################
   # Sanity Checks on input
@@ -40,6 +40,17 @@ createDb <- function(compoundList, dbName, adductList = NA, rt = FALSE, ccs = FA
     stop("Unknown CCS Type")
   }
 
+  # set standard value for fetching
+  #fetchIds <- FALSE
+
+  # are external ids part of the compound list
+  if(extId == TRUE & !any(c("kegg", "hmdb", "chebi") %in% colnames(compoundList))) {
+    message("external ID option was selected, but no KEGG, HMDB or ChEBI ID supplied. IDs will be fetched from CTS.")
+    fetchIds <- TRUE
+  } else {
+    fetchIds <- FALSE
+  }
+
   ################################################################################################################################################
   # get/generate required values
   ################################################################################################################################################
@@ -47,7 +58,7 @@ createDb <- function(compoundList, dbName, adductList = NA, rt = FALSE, ccs = FA
   dbFileName <- paste0(dbName, ".sqlite")
 
   # generate data for upload based on input
-  dbupload <- .generateSQLiteInput(compoundList, adductList = adductList, rt = rt, ccs = ccs)
+  dbupload <- .generateSQLiteInput(compoundList, adductList = adductList, rt = rt, ccs = ccs, fetchIds = fetchIds)
 
   ################################################################################################################################################
   # Generate SQLite DB
@@ -72,7 +83,7 @@ createDb <- function(compoundList, dbName, adductList = NA, rt = FALSE, ccs = FA
 
 
 ###### testing function for upload
-createDbUserDefined <- function(compoundList, dbName, rt = FALSE, ccs = FALSE) {
+createDbUserDefined <- function(compoundList, dbName, rt = FALSE, ccs = FALSE, ccsType = "DT", extId = FALSE) {
 
   ################################################################################################################################################
   # Sanity Checks on input
@@ -92,6 +103,16 @@ createDbUserDefined <- function(compoundList, dbName, rt = FALSE, ccs = FALSE) {
     stop("selected ccs option but no ccs column defined in compound list")
   }
 
+  if(ccs == TRUE & !ccsType %in% c("DT", "TWIMS", "TIMS", "predicted")) {
+    stop("Unknown CCS Type")
+  }
+
+  # check if external id columns exist
+  if(extId == TRUE & !all(c("kegg", "hmdb", "chebi") %in% colnames(compoundList))) {
+    stop("missing kegg, hmdb and chebi column")
+  }
+
+
   ################################################################################################################################################
   # add missing columns
   ################################################################################################################################################
@@ -101,6 +122,12 @@ createDbUserDefined <- function(compoundList, dbName, rt = FALSE, ccs = FALSE) {
 
   if(ccs == FALSE) {
     compoundList$ccs <- NA
+  }
+
+  if(extId == FALSE) {
+    compoundList$kegg <- NA
+    compoundList$hmdb <- NA
+    compoundList$chebi <- NA
   }
 
   ################################################################################################################################################
