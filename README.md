@@ -12,6 +12,6 @@ The Vignettes contain examples of high to use masstrixR (https://github.com/mich
 
 # Literature
 
-[1] Suhre & Schmitt-Koppline
+[1] Suhre & Schmitt-Kopplin
 [2] Wägele et al
-[4] Witting & Schmitt-Kopplin
+[3] Witting & Schmitt-Kopplin
