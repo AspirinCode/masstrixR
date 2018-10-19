@@ -1,0 +1,53 @@
+---
+title: "Using masstrixR - Create a SQL database"
+author: "Michael"
+date: "3 August 2018"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+# MassTRIX in R - Annotating MS1 data made easy...
+
+## Introduction
+
+Annotation of MS^1^ data with potential metabolites from different databases. This achieved by calculating theoretical adduct masses from metabolites and compare measured m/z values with theoretical ones within a give error (in Da or ppm).
+The masstrixR package uses SQLite for back-end databases storing theoretical adduct masses of a given metabolite database (e.g. YMDB). Two possibilities exist. Either a persistent database stored in a single .sqlite file can be generated and re-used or a in-memory database can be generated "on-the-fly". Additionally, large database stored in a .sqlite file can be read into memory for enhanced performance.
+
+## Reading a DB
+
+Metabolite databases from which adduct databases shall be created have to be supplied as tab separated text file with the following headers:
+
+id	smiles	inchi	inchikey	formula	name	exactmass
+
+Header names have to be exactly the same as stated above.
+
+```{r read compound list}
+library(masstrixR)
+
+# read YMDB text file and create example .sqlite fil
+compoundList <- data.frame(read.table("..\\DBs\\Txt\\chebi_20181015.txt", sep = "\t", header = T, stringsAsFactors = F, comment.char = "~"))
+
+#head(compoundList)
+```
+
+## Generate SQLite database and store to file
+
+A persistent .sqlite database file containing pre-calculated adduct masses can be generated from this compound list using functions from masstrixR. The adducts that shall be covered in this database have to be defined before. The <code>getAdductNames()</code> function returns a vector with all adduct names used in <code>masstrixR</code>.
+The following example creates a DB with [M+H]^+^ and [M+Na]^+^ adducts. The <code>createDb()</code> function creates a .sqlite file. A data path to which the SQLite shall be safed with a name has to be supplied. After succesfull creation the data path is returned.
+
+
+```{r generate sqlite}
+# list all adducts
+getAdductNames()
+
+# adducts used for DB generation
+adducts <- c("M+H", "M+Na")
+
+# create compound list for DB creation
+newCompoundList <- prepareCompoundList(compoundList, adductList = adducts)
+
+# create SQLite DB
+dbFileName <- createDb(newCompoundList, "..\\DBs\\SQLite\\chebi_20181015_pos_MH_MNa")
+```
