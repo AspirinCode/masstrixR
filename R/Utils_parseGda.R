@@ -4,6 +4,7 @@
 #' @return Returns a list with the three different dataframes, index 1 is the data, index 2 column annotation, index 3 row annotations
 #' @examples
 #' xxx
+#' @export
 readGdaFile <- function(pathToFile) {
 
   #create data frames for data

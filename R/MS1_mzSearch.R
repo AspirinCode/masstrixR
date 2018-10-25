@@ -1,13 +1,18 @@
-#' This function annotates masses in a peak list with possible metabolites from a selected DB. Used adducts are the adducts covered by the respective database
+#' Performing m/z search
+#'
+#' This function performs annotation of m/z values with putative metabolites using a previously created SQLite DB. Measured m/z values are compared against theoretical values within a defined error range. This error can be either absolute (in Da) or relative (in ppm).
+#' If the database contains RT or CCS values results can be a additionally filtered.
 #'
 #' @param peakList Data frame containing the peaks of interest, minimum column is called m.z ($m.z)
 #' @param dbFileName A .sqlite file containing the DB of interest
 #' @param mode Defines if the database shall be used from the disk ("onDisk") or in memory ("inMemory"). The second option enhances performances with very large peaks lists and DBs.
-#' @param mzTol Maximum allowed tolerance in Da (ppm will come soon)
+#' @param mzTol Maximum allowed tolerance in Da or ppm
+#' @param mzTolType Defines the error type for m/z search, "abs" is used for absolute mass error, "ppm" for relative error
+#' @param rt Boolean value indicating of RT filtering shall be performed
 #' @return Returns the filename of the generated database
 #' @examples
-#' xxx
-#search in a pre-defined database
+#' mzSearch()
+#' @export
 mzSearch <-function(peakList, dbFileName, mode = "onDisk",
                     mzTol = 0.005, mzTolType = "abs",
                     rt = FALSE, rtTol = 0.5, rtTolType = "abs",
@@ -55,6 +60,8 @@ mzSearch <-function(peakList, dbFileName, mode = "onDisk",
   # check database if columns required exist
   ######################################################
   # check DB if correct columns exist
+  # rework
+  # TODO check for NULL in columns!!!
   mydbColumns <- DBI::dbFetch(DBI::dbSendQuery(mydb, "PRAGMA table_info(adducts)"))
 
   # check for RT
@@ -80,8 +87,8 @@ mzSearch <-function(peakList, dbFileName, mode = "onDisk",
       lowerMz <- peakList$m.z[i] - mzTol
       upperMz <- peakList$m.z[i] + mzTol
     } else if(mzTolType == "ppm") {
-      #lowerMz <- peakList$m.z[i] - mzTol
-      #upperMz <- peakList$m.z[i] + mzTol
+      lowerMz <- peakList$m.z[i] - mzTol / 1e6 * peakList$m.z[i]
+      upperMz <- peakList$m.z[i] + mzTol / 1e6 * peakList$m.z[i]
     } else {
       stop("Unknown mzTolType defined!")
     }
@@ -179,8 +186,9 @@ mzSearch <-function(peakList, dbFileName, mode = "onDisk",
 #' @param mzTol Maximum allowed tolerance in Da (ppm will come soon)
 #' @return Returns the filename of the generated database
 #' @examples
-#' xxx
-#search in a pre-defined database
+#' mzLookup()
+#'
+#' @export
 mzLookUp <- function(peakList, compoundList, mzTol = 0.005, mzTolType = "abs",
                      rt = FALSE, rtTol = 0.5, rtTolType = "abs",
                      ccs = FALSE, ccsTol = 1, ccsTolType = "rel") {

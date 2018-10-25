@@ -3,6 +3,7 @@
 #' @return Returns a string with the ion formula
 #' @examples
 #' ionFormula <- calcAdductFormula("C6H12O6", "M+H")
+#' @export
 calcAdductFormula <- function(molecularFormula, adduct) {
 
   # get adduct calculation list
@@ -53,6 +54,7 @@ calcAdductFormula <- function(molecularFormula, adduct) {
 #' @return TRUE or FALSE
 #' @examples
 #' ionFormula <- containsFormula("C6H12O6", "H2O")
+#' @export
 containsFormula <- function(targetFormula, queryFormula) {
 
   # parse both formmula
@@ -83,6 +85,7 @@ containsFormula <- function(targetFormula, queryFormula) {
 #' @return Named vector with all elements
 #' @examples
 #' parseChemFormula("C6H12O6")
+#' @export
 parseChemFormula <- function(chemFormula) {
 
   #regex pattern to isolate all elements
@@ -110,6 +113,7 @@ parseChemFormula <- function(chemFormula) {
 #' @return Single string with chemical formula
 #' @examples
 #' parseChemFormula("C6H12O6")
+#' @export
 generateChemFormula <- function(parsedChemFormula) {
 
   # create empty string to append parts of formula

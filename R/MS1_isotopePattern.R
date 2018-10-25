@@ -1,18 +1,23 @@
-#' This function creates an SQLite database based on a given compound list. Minimum input is a metabolite name ($name), an exact mass ($exactMass), a formula ($formula) and an InChIKey ($inchikey)
+#' Prediction of isotope pattern
 #'
-#' @param compoundList List of compounds that shall be added to DB
-#' @param dbName A name for the database file
-#' @param adductList Vector with adducts that shall be covered in the DB.
-#' @return Returns the filename of the generated database
+#' This function predicts the isotope pattern for a given ion formula and adduct definition.
+#'
+#' @param ionFormula The formula of the ion for which the isotopic pattern shall be calculated, e.g. C6H12O6Na for the M+Na adduct of glucose
+#' @param charge Charge of the ion.
+#' @param plotit Boolean value if the isotope pattern shall be plotted
+#' @param treshold Intensity treshold for lowest isotope
+#' @param resolution resolution of the MS
+#' @return Returns a MSnbase Spectrum 1 object containing the calculated isotope pattern
 #' @examples
-#' xxx
-generateIsoPattern <- function(ionFormula, adduct, plotit = TRUE, treshold = 0.01, resolution = 50000) {
+#' predictIsoPattern()
+#' @export
+predictIsoPattern <- function(ionFormula, charge, plotit = FALSE, treshold = 0.01, resolution = 50000) {
 
   require(MSnbase)
 
   # get adduct calculation list
-  adductCalc <- getAdductCalc()
-  charge <- as.numeric(adductCalc[[adduct]][5])
+  # adductCalc <- getAdductCalc()
+  # charge <- as.numeric(adductCalc[[adduct]][5])
 
   # pre-check generated ion formula
   checked<-enviPat::check_chemform(isotopes, ionFormula)

@@ -1,12 +1,20 @@
-#' This function creates an SQLite database based on a given compound list. Minimum input is a metabolite name ($name), an exact mass ($exactMass), a formula ($formula) and an InChIKey ($inchikey)
+#' Creation of SQLiteDB
+#'
+#' masstrixR uses SQLite DBs as backend for the annotation process. In order to perform annotation of m/z values with putative metabolites a DB is required.
+#' This function creates a SQLite database using a validated compound list containing all required information. Such a list can be created using the \code{prepareCompoundList()} function.
 #'
 #' @param compoundList List of compounds that shall be added to DB
 #' @param dbName A name for the database file
-#' @param adductList Vector with adducts that shall be covered in the DB.
-#' @return Returns the filename of the generated database
+#'
 #' @examples
 #' xxx
-createDb <- function(compoundList, dbName, adductList = NA, rt = FALSE, ccs = FALSE, ccsType = "DT", extId = FALSE) {
+#'
+#' @author Michael Witting, \email{michael.witting@@helmholtz-muenchen.de}
+#'
+#' @seealso \code{\link{validateCompoundList}}
+#' @seealso \code{\link{prepareCompoundList}}
+#' @export
+createDb <- function(compoundList, dbName) {
 
   ################################################################################################################################################
   # Sanity Checks on input
@@ -15,6 +23,9 @@ createDb <- function(compoundList, dbName, adductList = NA, rt = FALSE, ccs = FA
   if(!all(c("metaboliteID", "adductType", "adductMass", "neutralMass", "neutralFormula", "ionFormula", "metaboliteName", "inchikey", "inchi", "smiles", "rt", "ccs", "kegg", "hmdb", "chebi") %in% colnames(compoundList))) {
     stop("One or more column header does not match the required headers: id, smiles, inchi, inchikey, formula, name, exactmass.")
   }
+
+  # check correct format of each column
+  # TODO
 
   ################################################################################################################################################
   # get/generate required values
@@ -42,8 +53,23 @@ createDb <- function(compoundList, dbName, adductList = NA, rt = FALSE, ccs = FA
   return(dbFileName)
 }
 
-###### testing function for upload
-createDbUserDefined <- function(compoundList, dbName, rt = FALSE, ccs = FALSE, ccsType = "DT", extId = FALSE) {
+#' Validation of compound list
+#'
+#' Compound list that are used to generate SQLite DBs require a speficic format prior to generation of the actual DB.
+#'
+#' This function validates if all required columns are in place and of the right format. Specific columns are added, if required (e.g. KEGG Ids)
+#'
+#' @param compoundList List of compounds that shall be added to DB
+#' @return Returns the filename of the generated database
+#' @examples
+#' xxx
+#'
+#' @author Michael Witting, \email{michael.witting@@helmholtz-muenchen.de}
+#'
+#' @seealso \code{\link{createDb}}
+#' @seealso \code{\link{prepareCompoundList}}
+#' @export
+validateCompoundList <- function(compoundList, rt = FALSE, ccs = FALSE, extId = FALSE) {
 
   ################################################################################################################################################
   # Sanity Checks on input
@@ -52,6 +78,9 @@ createDbUserDefined <- function(compoundList, dbName, rt = FALSE, ccs = FALSE, c
   if(!all(c("metaboliteID", "adductType", "adductMass", "neutralMass", "neutralFormula", "ionFormula", "metaboliteName", "inchikey", "inchi", "smiles") %in% colnames(compoundList))) {
     stop("One or more column header does not match the required headers: metaboliteID, adductType, adductMass, neutralMass, neutralFormula, ionFormula, metaboliteName, inchikey, inchi, smiles")
   }
+
+  # check correct format of each column
+  # TODO
 
   # is there an RT column, if RT is true
   if(rt == TRUE & !c("rt") %in% colnames(compoundList)) {
@@ -72,49 +101,51 @@ createDbUserDefined <- function(compoundList, dbName, rt = FALSE, ccs = FALSE, c
     stop("missing kegg, hmdb and chebi column")
   }
 
+  validatedCompoundList <- compoundList
 
   ################################################################################################################################################
   # add missing columns
   ################################################################################################################################################
   if(rt == FALSE) {
-    compoundList$rt <- NA
+    validatedCompoundList$rt <- NA
   }
 
   if(ccs == FALSE) {
-    compoundList$ccs <- NA
+    validatedCompoundList$ccs <- NA
   }
 
   if(extId == FALSE) {
-    compoundList$kegg <- NA
-    compoundList$hmdb <- NA
-    compoundList$chebi <- NA
+    validatedCompoundList$kegg <- NA
+    validatedCompoundList$hmdb <- NA
+    validatedCompoundList$chebi <- NA
   }
 
-  ################################################################################################################################################
-  # prepare DF for upload
-  ################################################################################################################################################
-  dbupload <- compoundList
-
-  ################################################################################################################################################
-  # Generate SQLite DB
-  ################################################################################################################################################
-  #upload to DB
-  mydb <- DBI::dbConnect(RSQLite::SQLite(), dbFileName)
-  DBI::dbWriteTable(mydb, "adducts", dbupload, overwrite = TRUE)
-
-  #disconnect DB
-  DBI::dbDisconnect(mydb)
-
-  ################################################################################################################################################
-  # Return path to SQLite file
-  ################################################################################################################################################
-  #return the filename
-  return(dbFileName)
+  return(validatedCompoundList)
 
 }
 
-
-prepareCompoundList <- function(compoundList, adductList = NA, rt = FALSE, ccs = FALSE, ccsType = "DT", extId = FALSE, numberOfCores = 4) {
+#' Preparation of compound list
+#'
+#' A compound list that can be used with masstrixR can be generated on the fly. Minimum input is a data frame with the following columns: metabolite id ($id), SMILES ($smiles), InChI ($inchi), InChIKey ($inchikey), formula ($formula) metabolite name ($name) and an exact mass ($exactmass).
+#' Furthermore, the adducts that shall be covered in the DB have to be defined. This can be either done by using an list of adducts or supplying a adduct definition for each metabolite with an additiona adduct column ($adducts). If it is intended to perform retetion time and collisional cross section matching columns containing this information are required ($rt and $ccs).
+#' In case of CCS matching, individual adduct rules are required since each adduct has a different CCS value. Examples for each input are found in the examples in the vignettes.
+#'
+#' @param compoundList List of compounds that shall be added to DB
+#' @param adductList Vector with adducts that shall be covered in the DB.
+#' @param rt Boolean value indicating if compound list contains RT data
+#' @param ccs Boolean value indicating if compound list contains CCS data
+#'
+#' @return Returns a data frame suitable for upload to a SQLite DB.
+#'
+#' @examples
+#' xxx
+#'
+#' @author Michael Witting, \email{michael.witting@@helmholtz-muenchen.de}
+#'
+#' @seealso \code{\link{validateCompoundList}}
+#' @seealso \code{\link{createDb}}
+#' @export
+prepareCompoundList <- function(compoundList, adductList = NA, rt = FALSE, ccs = FALSE, extId = FALSE, numberOfCores = 1) {
 
   ################################################################################################################################################
   # Sanity Checks on input
@@ -144,15 +175,11 @@ prepareCompoundList <- function(compoundList, adductList = NA, rt = FALSE, ccs =
     stop("ccs option requires individual adduct annotation")
   }
 
-  if(ccs == TRUE & !ccsType %in% c("DT", "TWIMS", "TIMS", "predicted")) {
-    stop("Unknown CCS Type")
-  }
+  # if(ccs == TRUE & !ccsType %in% c("DT", "TWIMS", "TIMS", "predicted")) {
+  #   stop("Unknown CCS Type")
+  # }
 
-  ################################################################################################################################################
-  # make cluster for CTS
-  ################################################################################################################################################
-  # Initiate cluster
-  cl <- parallel::makeCluster(numberOfCores)
+
 
   ################################################################################################################################################
   # create required variables
@@ -184,9 +211,18 @@ prepareCompoundList <- function(compoundList, adductList = NA, rt = FALSE, ccs =
   if(extId == TRUE & !all(c("kegg", "hmdb", "chebi") %in% colnames(compoundList))) {
     message("external ID option was selected, but no KEGG, HMDB or ChEBI ID supplied. IDs will be fetched from CTS.")
 
+    ################################################################################################################################################
+    # make cluster for CTS
+    ################################################################################################################################################
+    # Initiate cluster
+    cl <- parallel::makeCluster(numberOfCores)
+
     compoundList$kegg <- NA
     compoundList$hmdb <- NA
     compoundList$chebi <- NA
+
+    # stop parallel cluster
+    parallel::stopCluster(cl)
 
   } else {
 
@@ -206,9 +242,6 @@ prepareCompoundList <- function(compoundList, adductList = NA, rt = FALSE, ccs =
       compoundList$chebi <- NA
     }
   }
-
-  # stop parallel cluster
-  parallel::stopCluster(cl)
 
   ###############################################################################################################################################
   # check if external ids are present or fetch them from CTS
@@ -323,3 +356,4 @@ getExternalDbIds <- function(inchikey, db) {
   return(result)
 
 }
+
