@@ -62,14 +62,28 @@ mzSearch <- function(peakList, dbFileName, mode = "onDisk",
   # TODO check for NULL in columns!!!
   mydbColumns <- DBI::dbFetch(DBI::dbSendQuery(mydb, "PRAGMA table_info(adducts)"))
 
-  # check for RT
-  if (rt == TRUE & !any(grepl("rt", mydbColumns$name))) {
+  # check number of nulls in ccs column of DB
+  noOfNulls <- DBI::dbFetch(DBI::dbSendQuery(mydb, "SELECT SUM(CASE WHEN rt IS NULL THEN 1 ELSE 0 END) as rtNullCount FROM adducts;"))
+  noOfTotal <- DBI::dbFetch(DBI::dbSendQuery(mydb, "SELECT COUNT(metaboliteId) as rtCount FROM adducts;"))
+
+  if(rt == TRUE & noOfNulls$rtNullCount / noOfTotal$rtCount == 1) {
+
+    # disconnect DB
+    DBI::dbDisconnect(mydb)
     stop("RT option selected, but selected DB does not contain RT data")
+
   }
 
-  # check for CCS
-  if (ccs == TRUE & !any(grepl("ccs", mydbColumns$name))) {
+  # check number of nulls in ccs column of DB
+  noOfNulls <- DBI::dbFetch(DBI::dbSendQuery(mydb, "SELECT SUM(CASE WHEN ccs IS NULL THEN 1 ELSE 0 END) as ccsNullCount FROM adducts;"))
+  noOfTotal <- DBI::dbFetch(DBI::dbSendQuery(mydb, "SELECT COUNT(metaboliteId) as ccsCount FROM adducts;"))
+
+  if(ccs == TRUE & noOfNulls$ccsNullCount / noOfTotal$ccsCount == 1) {
+
+    # disconnect DB
+    DBI::dbDisconnect(mydb)
     stop("CCS option selected, but selected DB does not contain CCS data")
+
   }
 
   # perform MS1 annotation
@@ -109,9 +123,9 @@ mzSearch <- function(peakList, dbFileName, mode = "onDisk",
     if (rt == TRUE & rtTolType == "abs") {
       lowerRt <- peakList$RT[i] - rtTol
       upperRt <- peakList$RT[i] + rtTol
-    } else if (rt == TRUE & mzTolType == "rel") {
-      lowerRt <- peakList$RT[i] - peakList$RT * rtTolType
-      upperRt <- peakList$RT[i] + peakList$RT * rtTolType
+    } else if (rt == TRUE & rtTolType == "rel") {
+      lowerRt <- peakList$RT[i] - peakList$RT[i] * rtTol
+      upperRt <- peakList$RT[i] + peakList$RT[i] * rtTol
     } else if (rt == TRUE) {
       stop("unknown rtTolTyp defined!")
     }
@@ -124,8 +138,8 @@ mzSearch <- function(peakList, dbFileName, mode = "onDisk",
       lowerCcs <- peakList$CCS[i] - ccsTol
       upperCcs <- peakList$CCS[i] + ccsTol
     } else if (ccs == TRUE & ccsTolType == "rel") {
-      lowerCcs <- peakList$CCS[i] - peakList$CCS * ccsTolType
-      upperCcs <- peakList$CCS[i] + peakList$CCS * ccsTolType
+      lowerCcs <- peakList$CCS[i] - peakList$CCS[i] * ccsTolType
+      upperCcs <- peakList$CCS[i] + peakList$CCS[i] * ccsTolType
     } else if (ccs == TRUE) {
       stop("unknown rtTolTyp defined!")
     }
