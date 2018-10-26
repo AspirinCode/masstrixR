@@ -6,6 +6,9 @@
 \usage{
 readGdaFile(pathToFile)
 }
+\arguments{
+\item{pathTofile}{Path to .gda file that shall be loaded}
+}
 \value{
 Returns a list with the three different dataframes, index 1 is the data, index 2 column annotation, index 3 row annotations
 }

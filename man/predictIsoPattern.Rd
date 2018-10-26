@@ -25,5 +25,5 @@ Returns a MSnbase Spectrum 1 object containing the calculated isotope pattern
 This function predicts the isotope pattern for a given ion formula and adduct definition.
 }
 \examples{
-predictIsoPattern()
+predictIsoPattern("C6H12O6Na", charge = 1)
 }

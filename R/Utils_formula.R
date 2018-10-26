@@ -9,11 +9,11 @@ calcAdductFormula <- function(molecularFormula, adduct) {
   # get adduct calculation list
   adductCalc <- getAdductCalc()
 
-  #print(paste0(molecularFormula, "_", adduct))
+  # print(paste0(molecularFormula, "_", adduct))
 
 
   # molecule formula parsed
-  if(as.numeric(adductCalc[[adduct]][1]) > 1) {
+  if (as.numeric(adductCalc[[adduct]][1]) > 1) {
     molFormulaList <- parseChemFormula(molecularFormula) * as.numeric(adductCalc[[adduct]][1]) # multiplied with factor from adduct calculation
   } else {
     molFormulaList <- parseChemFormula(molecularFormula)
@@ -30,14 +30,26 @@ calcAdductFormula <- function(molecularFormula, adduct) {
   # create an empty list with all atoms
   adductFormulaList <- sapply(atoms, function(x) NULL)
 
-  for(i in 1:length(adductFormulaList)) {
-    #print(names(adductFormulaList[i]))
+  for (i in 1:length(adductFormulaList)) {
+    # print(names(adductFormulaList[i]))
 
     atom <- names(adductFormulaList[i])
 
-    mol <- if(!is.na(molFormulaList[atom])) {molFormulaList[atom]} else {0}
-    add <- if(!is.na(addFormulaList[atom])) {addFormulaList[atom]} else {0}
-    sub <- if(!is.na(subFormulaList[atom])) {subFormulaList[atom]} else {0}
+    mol <- if (!is.na(molFormulaList[atom])) {
+      molFormulaList[atom]
+    } else {
+      0
+    }
+    add <- if (!is.na(addFormulaList[atom])) {
+      addFormulaList[atom]
+    } else {
+      0
+    }
+    sub <- if (!is.na(subFormulaList[atom])) {
+      subFormulaList[atom]
+    } else {
+      0
+    }
 
     adductFormulaList[i] <- mol + add - sub
   }
@@ -67,17 +79,15 @@ containsFormula <- function(targetFormula, queryFormula) {
   # return value
   contains <- FALSE
 
-  for(atom in atoms) {
-
-    if(is.na(targetFormulaList[atom])) {
+  for (atom in atoms) {
+    if (is.na(targetFormulaList[atom])) {
       return(FALSE)
-    } else if(targetFormulaList[atom] - queryFormulaList[atom] >= 0) {
+    } else if (targetFormulaList[atom] - queryFormulaList[atom] >= 0) {
       contains <- TRUE
     }
   }
 
   return(contains)
-
 }
 
 #' This function parses a chemical formula into a named vector
@@ -88,7 +98,7 @@ containsFormula <- function(targetFormula, queryFormula) {
 #' @export
 parseChemFormula <- function(chemFormula) {
 
-  #regex pattern to isolate all elements
+  # regex pattern to isolate all elements
   elementPattern <- "([A][cglmrstu]|[B][aehikr]?|[C][adeflmnorsu]?|[D][bsy]|[E][rsu]|[F][elmr]?|[G][ade]|[H][efgos]?|[I][nr]?|[K][r]?|[L][airuv]|[M][cdgnot]|[N][abdehiop]?|[O][gs]?|[P][abdmortu]?|[R][abefghnu]|[S][bcegimnr]?|[T][abcehilms]|[U]|[V]|[W]|[X][e]|[Y][b]?|[Z][nr])([0-9]*)"
 
   # extract all matching pattern
@@ -120,9 +130,9 @@ generateChemFormula <- function(parsedChemFormula) {
   chemFormulaRecon <- ""
 
   # first C H N O S P, then elements by alphabetical order
-  for(atom in c("C", "H", "N", "O", "S", "P")) {
-    if(!is.na(parsedChemFormula[atom])) {
-      if(parsedChemFormula[atom] == 1.0) {
+  for (atom in c("C", "H", "N", "O", "S", "P")) {
+    if (!is.na(parsedChemFormula[atom])) {
+      if (parsedChemFormula[atom] == 1.0) {
         chemFormulaRecon <- paste0(chemFormulaRecon, atom)
       } else {
         chemFormulaRecon <- paste0(chemFormulaRecon, atom, parsedChemFormula[atom])
@@ -132,11 +142,11 @@ generateChemFormula <- function(parsedChemFormula) {
 
   # get all remaining elements
   restElements <- names(parsedChemFormula)
-  restElements <- restElements[! restElements %in% c("C", "H", "N", "O", "S", "P")]
+  restElements <- restElements[!restElements %in% c("C", "H", "N", "O", "S", "P")]
 
   # iterate through all remaining elements in alphabetical order
-  for(atom in sort(restElements)) {
-    if(parsedChemFormula[atom] == 1.0) {
+  for (atom in sort(restElements)) {
+    if (parsedChemFormula[atom] == 1.0) {
       chemFormulaRecon <- paste0(chemFormulaRecon, atom)
     } else {
       chemFormulaRecon <- paste0(chemFormulaRecon, atom, parsedChemFormula[atom])

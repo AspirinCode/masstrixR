@@ -9,45 +9,50 @@
 #' @param resolution resolution of the MS
 #' @return Returns a MSnbase Spectrum 1 object containing the calculated isotope pattern
 #' @examples
-#' predictIsoPattern()
+#' predictIsoPattern("C6H12O6Na", charge = 1)
 #' @export
-predictIsoPattern <- function(ionFormula, charge, plotit = FALSE, treshold = 0.01, resolution = 50000) {
+predictIsoPattern <-
+  function(ionFormula,
+             charge,
+             plotit = FALSE,
+             treshold = 0.01,
+             resolution = 50000) {
+    require(MSnbase)
 
-  require(MSnbase)
+    # pre-check generated ion formula
+    checked <- enviPat::check_chemform(isotopes, ionFormula)
 
-  # get adduct calculation list
-  # adductCalc <- getAdductCalc()
-  # charge <- as.numeric(adductCalc[[adduct]][5])
+    # create isotope pattern
+    centro <- enviPat::isowrap(
+      isotopes,
+      checked,
+      resmass = FALSE,
+      resolution = resolution,
+      nknots = 4,
+      spar = 0.2,
+      threshold = 0.01,
+      charge = charge,
+      emass = 0.00054858,
+      algo = 2,
+      ppm = FALSE,
+      dmz = "get",
+      # retrieve dm from R=m/dm
+      frac = 1 / 4,
+      env = "Gaussian",
+      detect = "centroid",
+      plotit = plotit
+    )
 
-  # pre-check generated ion formula
-  checked<-enviPat::check_chemform(isotopes, ionFormula)
+    # create Spectrum1 object from it
+    centro <- as.data.frame(centro)
+    colnames(centro) <- c("mz", "int")
+    isotopeSpectrum <- new(
+      "Spectrum1",
+      mz = centro$mz,
+      intensity = centro$int,
+      centroided = TRUE
+    )
 
-  # create isotope pattern
-  centro<-enviPat::isowrap(isotopes,
-                  checked,
-                  resmass = FALSE,
-                  resolution=resolution,
-                  nknots=4,
-                  spar=0.2,
-                  threshold=0.01,
-                  charge=charge,
-                  emass=0.00054858,
-                  algo=2,
-                  ppm=FALSE,
-                  dmz="get", # retrieve dm from R=m/dm
-                  frac=1/4,
-                  env="Gaussian",
-                  detect="centroid",
-                  plotit=plotit)
-
-  # create Spectrum1 object from it
-  centro <- as.data.frame(centro)
-  colnames(centro) <- c("mz", "int")
-  isotopeSpectrum <- new("Spectrum1",
-                         mz = centro$mz,
-                         intensity = centro$int,
-                         centroided = TRUE)
-
-  # return values
-  return(isotopeSpectrum)
-}
+    # return values
+    return(isotopeSpectrum)
+  }

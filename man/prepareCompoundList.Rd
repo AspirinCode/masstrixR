@@ -5,7 +5,7 @@
 \title{Preparation of compound list}
 \usage{
 prepareCompoundList(compoundList, adductList = NA, rt = FALSE,
-  ccs = FALSE, extId = FALSE, numberOfCores = 1)
+  ccs = FALSE, extId = FALSE)
 }
 \arguments{
 \item{compoundList}{List of compounds that shall be added to DB}
@@ -25,7 +25,7 @@ Furthermore, the adducts that shall be covered in the DB have to be defined. Thi
 In case of CCS matching, individual adduct rules are required since each adduct has a different CCS value. Examples for each input are found in the examples in the vignettes.
 }
 \examples{
-xxx
+prepareCompoundList(compoundList, adducts = c("M+H", "M+Na"))
 
 }
 \seealso{

@@ -13,45 +13,43 @@
 #' @examples
 #' mzSearch()
 #' @export
-mzSearch <-function(peakList, dbFileName, mode = "onDisk",
-                    mzTol = 0.005, mzTolType = "abs",
-                    rt = FALSE, rtTol = 0.5, rtTolType = "abs",
-                    ccs = FALSE, ccsTol = 1, ccsTolType = "rel") {
+mzSearch <- function(peakList, dbFileName, mode = "onDisk",
+                     mzTol = 0.005, mzTolType = "abs",
+                     rt = FALSE, rtTol = 0.5, rtTolType = "abs",
+                     ccs = FALSE, ccsTol = 1, ccsTolType = "rel") {
 
-  #some sanity checks here
-  #TODO: add checks on data frame, DB etc...
-  if(!all(c("m.z") %in% colnames(peakList))) {
-    stop("no m/z column defined")
+  # some sanity checks here
+  # TODO: add checks on data frame, DB etc...
+  if (!any(c("mz", "m.z", "mzmed") %in% colnames(peakList))) {
+    stop("no m/z column defined!")
   }
 
   # check if RT column is supplied
-  if(rt == TRUE & !all(c("RT") %in% colnames(peakList))) {
+  if (rt == TRUE & !all(c("RT") %in% colnames(peakList))) {
     stop("RT searching is TRUE, but no RT column found in peaklist")
   }
 
   # check if CCS column is supplied
-  if(ccs == TRUE & !all(c("CCS") %in% colnames(peakList))) {
+  if (ccs == TRUE & !all(c("CCS") %in% colnames(peakList))) {
     stop("CCS searching is TRUE, but no CCS column found in peaklist")
   }
 
-  #depended on the chosen mode different connections are required
-  if(mode == "onDisk") {
+  # depended on the chosen mode different connections are required
+  if (mode == "onDisk") {
 
-    #connect to DB
+    # connect to DB
     mydb <- DBI::dbConnect(RSQLite::SQLite(), dbFileName)
+  } else if (mode == "inMemory") {
 
-  } else if(mode == "inMemory") {
-
-    #make connection to DB and copy to memory DB
+    # make connection to DB and copy to memory DB
     tempdb <- DBI::dbConnect(RSQLite::SQLite(), dbFileName)
-    mydb <-DBI::dbConnect(RSQLite::SQLite(), ":memory:")
+    mydb <- DBI::dbConnect(RSQLite::SQLite(), ":memory:")
 
-    #copy database
+    # copy database
     RSQLite::sqliteCopyDatabase(tempdb, mydb)
 
-    #disconnect not required DB
+    # disconnect not required DB
     DBI::dbDisconnect(tempdb)
-
   } else {
     stop("Unknown mode")
   }
@@ -65,30 +63,41 @@ mzSearch <-function(peakList, dbFileName, mode = "onDisk",
   mydbColumns <- DBI::dbFetch(DBI::dbSendQuery(mydb, "PRAGMA table_info(adducts)"))
 
   # check for RT
-  if(rt == TRUE & !any(grepl("rt", mydbColumns$name))) {
+  if (rt == TRUE & !any(grepl("rt", mydbColumns$name))) {
     stop("RT option selected, but selected DB does not contain RT data")
   }
 
   # check for CCS
-  if(ccs == TRUE & !any(grepl("ccs", mydbColumns$name))) {
+  if (ccs == TRUE & !any(grepl("ccs", mydbColumns$name))) {
     stop("CCS option selected, but selected DB does not contain CCS data")
   }
 
-  #perform MS1 annotation
+  # perform MS1 annotation
   ms1annotation <- data.frame()
 
-  for(i in 1:nrow(peakList)) {
+  for (i in 1:nrow(peakList)) {
+
+    ######################################################
+    # get mz value
+    ######################################################
+    if (c("mz") %in% colnames(peakList)) {
+      mz <- peakList$mz[i]
+    } else if (c("m.z") %in% colnames(peakList)) {
+      mz <- peakList$m.z[i]
+    } else if (c("mzmed") %in% colnames(peakList)) {
+      mz <- peakList$mzmed[i]
+    }
 
     ######################################################
     # m/z boundaries
     ######################################################
     # calc lower and upper mz boundary
-    if(mzTolType == "abs") {
-      lowerMz <- peakList$m.z[i] - mzTol
-      upperMz <- peakList$m.z[i] + mzTol
-    } else if(mzTolType == "ppm") {
-      lowerMz <- peakList$m.z[i] - mzTol / 1e6 * peakList$m.z[i]
-      upperMz <- peakList$m.z[i] + mzTol / 1e6 * peakList$m.z[i]
+    if (mzTolType == "abs") {
+      lowerMz <- mz - mzTol
+      upperMz <- mz + mzTol
+    } else if (mzTolType == "ppm") {
+      lowerMz <- mz - mzTol / 1e6 * mz
+      upperMz <- mz + mzTol / 1e6 * mz
     } else {
       stop("Unknown mzTolType defined!")
     }
@@ -97,13 +106,13 @@ mzSearch <-function(peakList, dbFileName, mode = "onDisk",
     # RT boundaries
     ######################################################
     # calc lower and upper RT boundary
-    if(rt == TRUE & rtTolType == "abs") {
+    if (rt == TRUE & rtTolType == "abs") {
       lowerRt <- peakList$RT[i] - rtTol
       upperRt <- peakList$RT[i] + rtTol
-    } else if(rt == TRUE & mzTolType == "rel") {
+    } else if (rt == TRUE & mzTolType == "rel") {
       lowerRt <- peakList$RT[i] - peakList$RT * rtTolType
       upperRt <- peakList$RT[i] + peakList$RT * rtTolType
-    } else if(rt == TRUE) {
+    } else if (rt == TRUE) {
       stop("unknown rtTolTyp defined!")
     }
 
@@ -111,71 +120,94 @@ mzSearch <-function(peakList, dbFileName, mode = "onDisk",
     # CCS boundaries
     ######################################################
     # calc lower and upper RT boundary
-    if(ccs == TRUE & ccsTolType == "abs") {
+    if (ccs == TRUE & ccsTolType == "abs") {
       lowerCcs <- peakList$CCS[i] - ccsTol
       upperCcs <- peakList$CCS[i] + ccsTol
-    } else if(ccs == TRUE & ccsTolType == "rel") {
+    } else if (ccs == TRUE & ccsTolType == "rel") {
       lowerCcs <- peakList$CCS[i] - peakList$CCS * ccsTolType
       upperCcs <- peakList$CCS[i] + peakList$CCS * ccsTolType
-    } else if(ccs == TRUE) {
+    } else if (ccs == TRUE) {
       stop("unknown rtTolTyp defined!")
     }
 
     # generate query
-    query <- 'SELECT * FROM adducts WHERE (adductMass BETWEEN :lowerMz AND :upperMz)'
-    param <- list(lowerMz = lowerMz,
-                  upperMz = upperMz)
+    query <- "SELECT * FROM adducts WHERE (adductMass BETWEEN :lowerMz AND :upperMz)"
+    param <- list(
+      lowerMz = lowerMz,
+      upperMz = upperMz
+    )
 
     # add part for RT search
-    if(rt == TRUE) {
-      query <- paste0(query, 'AND (rt BETWEEN :lowerRt AND :upperRt)')
-      param <- c(param, list(lowerRt = lowerRt,
-                             upperRt = upperRt))
+    if (rt == TRUE) {
+      query <- paste0(query, "AND (rt BETWEEN :lowerRt AND :upperRt)")
+      param <- c(param, list(
+        lowerRt = lowerRt,
+        upperRt = upperRt
+      ))
     }
 
     # add part for CCS search
-    if(ccs == TRUE) {
-      query <- paste0(query, 'AND (ccs BETWEEN :lowerCcs AND :upperCcs)')
-      param <- c(param, list(lowerCcs = lowerCcs,
-                             upperCcs = upperCcs))
+    if (ccs == TRUE) {
+      query <- paste0(query, "AND (ccs BETWEEN :lowerCcs AND :upperCcs)")
+      param <- c(param, list(
+        lowerCcs = lowerCcs,
+        upperCcs = upperCcs
+      ))
     }
 
-    #execute query
+    # execute query
     resultSet <- DBI::dbSendQuery(mydb, query)
     DBI::dbBind(resultSet, param = param)
 
-    #fetch result set into a dataframe and check if an annotation was found
+    # fetch result set into a dataframe and check if an annotation was found
     annotation <- DBI::dbFetch(resultSet)
-    if(nrow(annotation) > 0) {
-      ms1annotation <- rbind.data.frame(ms1annotation, cbind.data.frame(peakList[i,], annotation))
+    if (nrow(annotation) > 0) {
+      ms1annotation <- rbind.data.frame(ms1annotation, cbind.data.frame(peakList[i, ], annotation))
     }
 
-    #clear result
+    # clear result
     DBI::dbClearResult(resultSet)
   }
 
   # disconnect DB
   DBI::dbDisconnect(mydb)
 
-  #calculate absolute and relative m/z error
-  ms1annotation$mzAbsError <- ms1annotation$m.z - ms1annotation$adductMass
-  ms1annotation$mzRelError <- (ms1annotation$m.z - ms1annotation$adductMass) / ms1annotation$adductMass * 1000000
+  ######################################################
+  # get mz value
+  ######################################################
+  if (c("mz") %in% colnames(peakList)) {
+
+    # calculate absolute and relative m/z error
+    ms1annotation$mzAbsError <- ms1annotation$mz - ms1annotation$adductMass
+    ms1annotation$mzRelError <- (ms1annotation$mz - ms1annotation$adductMass) / ms1annotation$adductMass * 1000000
+  } else if (c("m.z") %in% colnames(peakList)) {
+
+    # calculate absolute and relative m/z error
+    ms1annotation$mzAbsError <- ms1annotation$m.z - ms1annotation$adductMass
+    ms1annotation$mzRelError <- (ms1annotation$m.z - ms1annotation$adductMass) / ms1annotation$adductMass * 1000000
+  } else if (c("mzmed") %in% colnames(peakList)) {
+
+    # calculate absolute and relative m/z error
+    ms1annotation$mzAbsError <- ms1annotation$mzmed - ms1annotation$adductMass
+    ms1annotation$mzRelError <- (ms1annotation$mzmed - ms1annotation$adductMass) / ms1annotation$adductMass * 1000000
+  }
+
+
 
   # calculate RT error
-  if(rt == TRUE) {
+  if (rt == TRUE) {
     ms1annotation$rtAbsError <- ms1annotation$RT - ms1annotation$rt
     ms1annotation$rtRelError <- (ms1annotation$RT - ms1annotation$rt) / ms1annotation$rt
   }
 
   # calculate RT error
-  if(ccs == TRUE) {
+  if (ccs == TRUE) {
     ms1annotation$ccsAbsError <- ms1annotation$CCS - ms1annotation$ccs
     ms1annotation$ccsRelError <- (ms1annotation$CCS - ms1annotation$ccs) / ms1annotation$ccs
   }
 
-  #return results
+  # return results
   return(ms1annotation)
-
 }
 
 #' This function annotates masses in a peak list with possible metabolites from a selected DB. Used adducts are the adducts covered by the respective database
@@ -197,7 +229,7 @@ mzLookUp <- function(peakList, compoundList, mzTol = 0.005, mzTolType = "abs",
   # Sanity Checks on input
   ################################################################################################################################################
   # correct column headers in compound list?
-  if(!all(c("metaboliteID", "adductType", "adductMass", "neutralMass", "neutralFormula", "ionFormula", "metaboliteName", "inchikey", "inchi", "smiles", "rt", "ccs", "kegg", "hmdb", "chebi") %in% colnames(compoundList))) {
+  if (!all(c("metaboliteID", "adductType", "adductMass", "neutralMass", "neutralFormula", "ionFormula", "metaboliteName", "inchikey", "inchi", "smiles", "rt", "ccs", "kegg", "hmdb", "chebi") %in% colnames(compoundList))) {
     stop("One or more column header does not match the required headers: id, smiles, inchi, inchikey, formula, name, exactmass.")
   }
 
@@ -207,42 +239,42 @@ mzLookUp <- function(peakList, compoundList, mzTol = 0.005, mzTolType = "abs",
   # }
 
   # is there an RT column, if RT is true
-  if(rt == TRUE & !c("rt") %in% colnames(compoundList)) {
+  if (rt == TRUE & !c("rt") %in% colnames(compoundList)) {
     stop("selected rt option but no rt column defined in compound list")
   }
 
   # is there an CCS column, if CCS is true
-  if(ccs == TRUE & !c("ccs") %in% colnames(compoundList)) {
+  if (ccs == TRUE & !c("ccs") %in% colnames(compoundList)) {
     stop("selected ccs option but no ccs column defined in compound list")
   }
 
   # if CCS is true then individual adducts for each metabolite are required
-  if(ccs == TRUE & !c("adducts") %in% colnames(compoundList) & all(grepl(",", compoundList$adducts))) {
+  if (ccs == TRUE & !c("adducts") %in% colnames(compoundList) & all(grepl(",", compoundList$adducts))) {
     stop("ccs option requires individual adduct annotation")
   }
 
   #  # generate data for upload based on input
   dbupload <- compoundList
 
-  #upload to temp DB
+  # upload to temp DB
   mydb <- DBI::dbConnect(RSQLite::SQLite(), ":memory:")
   DBI::dbWriteTable(mydb, "adducts", dbupload)
 
-  #perform MS1 annotation
+  # perform MS1 annotation
   ms1annotation <- data.frame()
 
-  for(i in 1:nrow(peakList)) {
+  for (i in 1:nrow(peakList)) {
 
     ######################################################
     # m/z boundaries
     ######################################################
     # calc lower and upper mz boundary
-    if(mzTolType == "abs") {
+    if (mzTolType == "abs") {
       lowerMz <- peakList$m.z[i] - mzTol
       upperMz <- peakList$m.z[i] + mzTol
-    } else if(mzTolType == "ppm") {
-      #lowerMz <- peakList$m.z[i] - mzTol
-      #upperMz <- peakList$m.z[i] + mzTol
+    } else if (mzTolType == "ppm") {
+      # lowerMz <- peakList$m.z[i] - mzTol
+      # upperMz <- peakList$m.z[i] + mzTol
     } else {
       stop("Unknown mzTolType defined!")
     }
@@ -251,13 +283,13 @@ mzLookUp <- function(peakList, compoundList, mzTol = 0.005, mzTolType = "abs",
     # RT boundaries
     ######################################################
     # calc lower and upper RT boundary
-    if(rt == TRUE & rtTolType == "abs") {
+    if (rt == TRUE & rtTolType == "abs") {
       lowerRt <- peakList$RT[i] - rtTol
       upperRt <- peakList$RT[i] + rtTol
-    } else if(rt == TRUE & mzTolType == "rel") {
+    } else if (rt == TRUE & mzTolType == "rel") {
       lowerRt <- peakList$RT[i] - peakList$RT * rtTolType
       upperRt <- peakList$RT[i] + peakList$RT * rtTolType
-    } else if(rt == TRUE) {
+    } else if (rt == TRUE) {
       stop("unknown rtTolTyp defined!")
     }
 
@@ -265,69 +297,74 @@ mzLookUp <- function(peakList, compoundList, mzTol = 0.005, mzTolType = "abs",
     # CCS boundaries
     ######################################################
     # calc lower and upper RT boundary
-    if(ccs == TRUE & ccsTolType == "abs") {
+    if (ccs == TRUE & ccsTolType == "abs") {
       lowerCcs <- peakList$CCS[i] - ccsTol
       upperCcs <- peakList$CCS[i] + ccsTol
-    } else if(ccs == TRUE & ccsTolType == "rel") {
+    } else if (ccs == TRUE & ccsTolType == "rel") {
       lowerCcs <- peakList$CCS[i] - peakList$CCS * ccsTolType
       upperCcs <- peakList$CCS[i] + peakList$CCS * ccsTolType
-    } else if(ccs == TRUE) {
+    } else if (ccs == TRUE) {
       stop("unknown rtTolTyp defined!")
     }
 
     # generate query
-    query <- 'SELECT * FROM adducts WHERE (adductMass BETWEEN :lowerMz AND :upperMz)'
-    param <- list(lowerMz = lowerMz,
-                  upperMz = upperMz)
+    query <- "SELECT * FROM adducts WHERE (adductMass BETWEEN :lowerMz AND :upperMz)"
+    param <- list(
+      lowerMz = lowerMz,
+      upperMz = upperMz
+    )
 
     # add part for RT search
-    if(rt == TRUE) {
-      query <- paste0(query, 'AND (rt BETWEEN :lowerRt AND :upperRt)')
-      param <- c(param, list(lowerRt = lowerRt,
-                             upperRt = upperRt))
+    if (rt == TRUE) {
+      query <- paste0(query, "AND (rt BETWEEN :lowerRt AND :upperRt)")
+      param <- c(param, list(
+        lowerRt = lowerRt,
+        upperRt = upperRt
+      ))
     }
 
     # add part for CCS search
-    if(ccs == TRUE) {
-      query <- paste0(query, 'AND (ccs BETWEEN :lowerCcs AND :upperCcs)')
-      param <- c(param, list(lowerCcs = lowerCcs,
-                             upperCcs = upperCcs))
+    if (ccs == TRUE) {
+      query <- paste0(query, "AND (ccs BETWEEN :lowerCcs AND :upperCcs)")
+      param <- c(param, list(
+        lowerCcs = lowerCcs,
+        upperCcs = upperCcs
+      ))
     }
 
-    #execute query
+    # execute query
     resultSet <- DBI::dbSendQuery(mydb, query)
     DBI::dbBind(resultSet, param = param)
 
-    #fetch result set into a dataframe and check if an annotation was found
+    # fetch result set into a dataframe and check if an annotation was found
     annotation <- DBI::dbFetch(resultSet)
-    if(nrow(annotation) > 0) {
-      ms1annotation <- rbind.data.frame(ms1annotation, cbind.data.frame(peakList[i,], annotation))
+    if (nrow(annotation) > 0) {
+      ms1annotation <- rbind.data.frame(ms1annotation, cbind.data.frame(peakList[i, ], annotation))
     }
 
-    #clear result
+    # clear result
     DBI::dbClearResult(resultSet)
   }
 
   # disconnect DB
   DBI::dbDisconnect(mydb)
 
-  #calculate absolute and relative m/z error
+  # calculate absolute and relative m/z error
   ms1annotation$mzAbsError <- ms1annotation$m.z - ms1annotation$adductMass
   ms1annotation$mzRelError <- (ms1annotation$m.z - ms1annotation$adductMass) / ms1annotation$adductMass * 1000000
 
   # calculate RT error
-  if(rt == TRUE) {
+  if (rt == TRUE) {
     ms1annotation$rtAbsError <- ms1annotation$RT - ms1annotation$rt
     ms1annotation$rtRelError <- (ms1annotation$RT - ms1annotation$rt) / ms1annotation$rt
   }
 
   # calculate RT error
-  if(ccs == TRUE) {
+  if (ccs == TRUE) {
     ms1annotation$ccsAbsError <- ms1annotation$CCS - ms1annotation$ccs
     ms1annotation$ccsRelError <- (ms1annotation$CCS - ms1annotation$ccs) / ms1annotation$ccs
   }
 
-  #return results
+  # return results
   return(ms1annotation)
-
 }

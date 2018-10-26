@@ -4,14 +4,13 @@
 \alias{validateCompoundList}
 \title{Validation of compound list}
 \usage{
-validateCompoundList(compoundList, rt = FALSE, ccs = FALSE,
-  extId = FALSE)
+validateCompoundList(compoundList, rt = FALSE, ccs = FALSE)
 }
 \arguments{
 \item{compoundList}{List of compounds that shall be added to DB}
 }
 \value{
-Returns the filename of the generated database
+Boolean value if list is suitable for upload to SQLiteDB
 }
 \description{
 Compound list that are used to generate SQLite DBs require a speficic format prior to generation of the actual DB.
@@ -20,7 +19,7 @@ Compound list that are used to generate SQLite DBs require a speficic format pri
 This function validates if all required columns are in place and of the right format. Specific columns are added, if required (e.g. KEGG Ids)
 }
 \examples{
-xxx
+validateCompoundList(compoundList)
 
 }
 \seealso{

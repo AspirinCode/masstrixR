@@ -2,7 +2,7 @@
 
 # http://r-pkgs.had.co.nz/tests.html
 # http://r-pkgs.had.co.nz/tests.html
-#http://r-pkgs.had.co.nz/description.html
+# http://r-pkgs.had.co.nz/description.html
 
 
 test_that("adduct formula calculation", {
