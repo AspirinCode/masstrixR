@@ -1,5 +1,14 @@
-writeSirius <- function(isoPattern, ms2spectrum, file) {
+writeSirius <- function(spectraList, file) {
 
+  ## sanity checks
+  if(!class(isoPatternSpectra)[1] == "Spectra") {
+    stop("spectraList should be of class Spectra")
+  }
+
+  ## get unique cluster ids in the spectraList object
+  exportClusters <- unique(spectraList@elementMetadata$cluster_id)
+
+  ## prepare for writing
   con <- file(file, "w")
   on.exit(close(con))
 
@@ -8,29 +17,32 @@ writeSirius <- function(isoPattern, ms2spectrum, file) {
     cat(..., file = file, sep = sep, append = append)
   }
 
-  # write isopattern (MS1 level)
-  .cat("\nBEGIN IONS\n")
+  # iterate over all cluster
+  for(exportCluster in exportClusters) {
 
-  .cat("PEPMASS=", isoPattern@monoMz, "\n")
+    print(exportCluster)
 
-  .cat("MSLEVEL=1\n",
-       "CHARGE=1+\n",
-       "NAME=",isoPattern@featureId)
+    # get all spectra associated with this cluster
+    clusterSpectra <- spectraList[which(spectraList@elementMetadata$cluster_id == exportCluster)]
 
-  .cat("\n", paste(mz(isoPattern), intensity(isoPattern), collapse = "\n"))
-  .cat("\nEND IONS\n")
+    for(i in 1:length(clusterSpectra)) {
 
-  # wirte fragmentation spectrum
-  .cat("\nBEGIN IONS\n")
+      # write header
+      .cat("\nBEGIN IONS\n")
+      .cat("PEPMASS=", clusterSpectra[i]@elementMetadata$mz, "\n")
 
-  .cat("PEPMASS=", isoPattern@monoMz, "\n")
+      # dependent on type MSLEVEL=1 or 2
+      if(clusterSpectra[i]@elementMetadata$type == "iso") {
+        .cat("MSLEVEL=1\n")
+      } else if(clusterSpectra[i]@elementMetadata$type == "ms2") {
+        .cat("MSLEVEL=2\n")
+      }
 
-  .cat("MSLEVEL=2\n",
-       "CHARGE=1+\n",
-       "NAME=",isoPattern@featureId)
+      .cat("CHARGE=1+\n")
+      .cat("NAME=", clusterSpectra[i]@elementMetadata$cluster_id, "\n")
+      .cat(paste(mz(clusterSpectra[[i]]), intensity(clusterSpectra[[i]]), collapse = "\n"))
+      .cat("\nEND IONS\n")
+    }
 
-  .cat("\n", paste(mz(ms2spectrum), intensity(ms2spectrum), collapse = "\n"))
-  .cat("\nEND IONS\n")
-
-
+  }
 }

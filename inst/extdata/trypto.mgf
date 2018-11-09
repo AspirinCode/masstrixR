@@ -1,0 +1,79 @@
+CHARGE=1+, 2+ and 3+
+###	C:\Users\witti\Desktop\trypto.mgf
+###	D:\Data\20181013_RTISuppresPos\Cel_1dil80_1-B,2_01_21145.d\analysis.baf
+###	Cel_1dil80_1-B,2_01_21145.d
+###	Instrument: maXis
+###    Cel_1dil80
+###    PeakWidth 5.00, MiniumIntensity 100, S/N 1Apply threshold 0, Threshold 10
+###    Retain Residuals no, Create neutrally no,
+###    FullScan Parameters: AdductIon (+)+H (-)-H, LowMass 250, HighMass 4000, MaxCharge charge decon 10, MinPeaks 3
+###    Perf. isotope decon yes, Max Charge Istopic decon 5, MW agreement 0.00, Abund. cutoff 2.00, Envelope cutoff 75.00
+###    MaxRes   Parameters: AdductIon (+)+H (-)-H, LowMass 250, HighMass 4000 
+###    Perf. isotope decon yes, Max Charge Istopic decon 5, Abund. cutoff 2.00
+###    MSn      Parameters: AdductIon (+)+H (-)-H, LowMass 50, HighMass 2000 
+###    Perf. isotope decon yes, Max Charge Istopic decon 4, Abund. cutoff 0.50
+###    Global Charge Limit: yes 3, Prefer FullScan Result: yes, Export what: 2 (0=non deconv/1=deconv only/2=mixed), NoMSMSSignals: 50, Intensity threshold: 100, NoMSSignals (deconv): 2, NoMSSignals (non-deconv): 20, NormalizeData: no, SingleCharged: no
+###	+MS2(205.0968), 35.0eV, 5.0min #1500
+
+###FS:    #m/z: 205.09684 #charge-128
+###MaxRes:#m/z:  0.00000 #charge-128
+###MS: 
+###MSMS: 
+BEGIN IONS
+TITLE=+MS2(205.0968), 35.0eV, 5.0min #1500
+RTINSECONDS=0
+SCANS=MS:  MSMS: 
+PEPMASS=205.09684	
+
+65.04096	1024	
+66.03579	848	
+74.02519	25364	
+77.04004	1460	
+81.04574	1008	
+89.03946	980	
+91.05484	106502	
+91.07012	1310	
+92.05825	7028	
+93.05778	1140	
+95.04946	1630	
+103.05436	5534	
+105.06974	4466	
+115.05442	95282	
+116.05944	9930	
+117.05739	56626	
+117.06953	37254	
+118.06524	450176	
+118.09108	6290	
+118.13142	5306	
+118.18276	1014	
+118.33658	2722	
+119.06855	41252	
+120.07121	1450	
+127.05419	3614	
+128.04940	3674	
+130.06532	40014	
+131.07015	3468	
+132.04444	1026	
+132.08091	59904	
+133.08423	5726	
+134.05983	820	
+140.04900	1782	
+141.05614	1246	
+142.06536	38322	
+143.07331	80702	
+144.04482	1524	
+144.08064	42854	
+145.06472	3726	
+145.08421	3978	
+146.06036	61432	
+147.06401	5610	
+155.06073	5882	
+156.06401	886	
+158.08413	1322	
+159.09177	9314	
+160.07625	3036	
+160.09486	814	
+170.06015	14874	
+171.06334	1656	
+END IONS
+

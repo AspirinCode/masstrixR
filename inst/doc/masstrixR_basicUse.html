@@ -1,0 +1,200 @@
+<!DOCTYPE html>
+
+<html xmlns="http://www.w3.org/1999/xhtml">
+
+<head>
+
+<meta charset="utf-8" />
+<meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+<meta name="generator" content="pandoc" />
+
+<meta name="viewport" content="width=device-width, initial-scale=1">
+
+<meta name="author" content="Michael" />
+
+
+<title>Using masstrixR - Create a SQLite database and perform MS1 search</title>
+
+
+
+<style type="text/css">code{white-space: pre;}</style>
+<style type="text/css">
+div.sourceCode { overflow-x: auto; }
+table.sourceCode, tr.sourceCode, td.lineNumbers, td.sourceCode {
+  margin: 0; padding: 0; vertical-align: baseline; border: none; }
+table.sourceCode { width: 100%; line-height: 100%; }
+td.lineNumbers { text-align: right; padding-right: 4px; padding-left: 4px; color: #aaaaaa; border-right: 1px solid #aaaaaa; }
+td.sourceCode { padding-left: 5px; }
+code > span.kw { color: #007020; font-weight: bold; } /* Keyword */
+code > span.dt { color: #902000; } /* DataType */
+code > span.dv { color: #40a070; } /* DecVal */
+code > span.bn { color: #40a070; } /* BaseN */
+code > span.fl { color: #40a070; } /* Float */
+code > span.ch { color: #4070a0; } /* Char */
+code > span.st { color: #4070a0; } /* String */
+code > span.co { color: #60a0b0; font-style: italic; } /* Comment */
+code > span.ot { color: #007020; } /* Other */
+code > span.al { color: #ff0000; font-weight: bold; } /* Alert */
+code > span.fu { color: #06287e; } /* Function */
+code > span.er { color: #ff0000; font-weight: bold; } /* Error */
+code > span.wa { color: #60a0b0; font-weight: bold; font-style: italic; } /* Warning */
+code > span.cn { color: #880000; } /* Constant */
+code > span.sc { color: #4070a0; } /* SpecialChar */
+code > span.vs { color: #4070a0; } /* VerbatimString */
+code > span.ss { color: #bb6688; } /* SpecialString */
+code > span.im { } /* Import */
+code > span.va { color: #19177c; } /* Variable */
+code > span.cf { color: #007020; font-weight: bold; } /* ControlFlow */
+code > span.op { color: #666666; } /* Operator */
+code > span.bu { } /* BuiltIn */
+code > span.ex { } /* Extension */
+code > span.pp { color: #bc7a00; } /* Preprocessor */
+code > span.at { color: #7d9029; } /* Attribute */
+code > span.do { color: #ba2121; font-style: italic; } /* Documentation */
+code > span.an { color: #60a0b0; font-weight: bold; font-style: italic; } /* Annotation */
+code > span.cv { color: #60a0b0; font-weight: bold; font-style: italic; } /* CommentVar */
+code > span.in { color: #60a0b0; font-weight: bold; font-style: italic; } /* Information */
+</style>
+
+
+
+<link href="data:text/css;charset=utf-8,body%20%7B%0Abackground%2Dcolor%3A%20%23fff%3B%0Amargin%3A%201em%20auto%3B%0Amax%2Dwidth%3A%20700px%3B%0Aoverflow%3A%20visible%3B%0Apadding%2Dleft%3A%202em%3B%0Apadding%2Dright%3A%202em%3B%0Afont%2Dfamily%3A%20%22Open%20Sans%22%2C%20%22Helvetica%20Neue%22%2C%20Helvetica%2C%20Arial%2C%20sans%2Dserif%3B%0Afont%2Dsize%3A%2014px%3B%0Aline%2Dheight%3A%201%2E35%3B%0A%7D%0A%23header%20%7B%0Atext%2Dalign%3A%20center%3B%0A%7D%0A%23TOC%20%7B%0Aclear%3A%20both%3B%0Amargin%3A%200%200%2010px%2010px%3B%0Apadding%3A%204px%3B%0Awidth%3A%20400px%3B%0Aborder%3A%201px%20solid%20%23CCCCCC%3B%0Aborder%2Dradius%3A%205px%3B%0Abackground%2Dcolor%3A%20%23f6f6f6%3B%0Afont%2Dsize%3A%2013px%3B%0Aline%2Dheight%3A%201%2E3%3B%0A%7D%0A%23TOC%20%2Etoctitle%20%7B%0Afont%2Dweight%3A%20bold%3B%0Afont%2Dsize%3A%2015px%3B%0Amargin%2Dleft%3A%205px%3B%0A%7D%0A%23TOC%20ul%20%7B%0Apadding%2Dleft%3A%2040px%3B%0Amargin%2Dleft%3A%20%2D1%2E5em%3B%0Amargin%2Dtop%3A%205px%3B%0Amargin%2Dbottom%3A%205px%3B%0A%7D%0A%23TOC%20ul%20ul%20%7B%0Amargin%2Dleft%3A%20%2D2em%3B%0A%7D%0A%23TOC%20li%20%7B%0Aline%2Dheight%3A%2016px%3B%0A%7D%0Atable%20%7B%0Amargin%3A%201em%20auto%3B%0Aborder%2Dwidth%3A%201px%3B%0Aborder%2Dcolor%3A%20%23DDDDDD%3B%0Aborder%2Dstyle%3A%20outset%3B%0Aborder%2Dcollapse%3A%20collapse%3B%0A%7D%0Atable%20th%20%7B%0Aborder%2Dwidth%3A%202px%3B%0Apadding%3A%205px%3B%0Aborder%2Dstyle%3A%20inset%3B%0A%7D%0Atable%20td%20%7B%0Aborder%2Dwidth%3A%201px%3B%0Aborder%2Dstyle%3A%20inset%3B%0Aline%2Dheight%3A%2018px%3B%0Apadding%3A%205px%205px%3B%0A%7D%0Atable%2C%20table%20th%2C%20table%20td%20%7B%0Aborder%2Dleft%2Dstyle%3A%20none%3B%0Aborder%2Dright%2Dstyle%3A%20none%3B%0A%7D%0Atable%20thead%2C%20table%20tr%2Eeven%20%7B%0Abackground%2Dcolor%3A%20%23f7f7f7%3B%0A%7D%0Ap%20%7B%0Amargin%3A%200%2E5em%200%3B%0A%7D%0Ablockquote%20%7B%0Abackground%2Dcolor%3A%20%23f6f6f6%3B%0Apadding%3A%200%2E25em%200%2E75em%3B%0A%7D%0Ahr%20%7B%0Aborder%2Dstyle%3A%20solid%3B%0Aborder%3A%20none%3B%0Aborder%2Dtop%3A%201px%20solid%20%23777%3B%0Amargin%3A%2028px%200%3B%0A%7D%0Adl%20%7B%0Amargin%2Dleft%3A%200%3B%0A%7D%0Adl%20dd%20%7B%0Amargin%2Dbottom%3A%2013px%3B%0Amargin%2Dleft%3A%2013px%3B%0A%7D%0Adl%20dt%20%7B%0Afont%2Dweight%3A%20bold%3B%0A%7D%0Aul%20%7B%0Amargin%2Dtop%3A%200%3B%0A%7D%0Aul%20li%20%7B%0Alist%2Dstyle%3A%20circle%20outside%3B%0A%7D%0Aul%20ul%20%7B%0Amargin%2Dbottom%3A%200%3B%0A%7D%0Apre%2C%20code%20%7B%0Abackground%2Dcolor%3A%20%23f7f7f7%3B%0Aborder%2Dradius%3A%203px%3B%0Acolor%3A%20%23333%3B%0Awhite%2Dspace%3A%20pre%2Dwrap%3B%20%0A%7D%0Apre%20%7B%0Aborder%2Dradius%3A%203px%3B%0Amargin%3A%205px%200px%2010px%200px%3B%0Apadding%3A%2010px%3B%0A%7D%0Apre%3Anot%28%5Bclass%5D%29%20%7B%0Abackground%2Dcolor%3A%20%23f7f7f7%3B%0A%7D%0Acode%20%7B%0Afont%2Dfamily%3A%20Consolas%2C%20Monaco%2C%20%27Courier%20New%27%2C%20monospace%3B%0Afont%2Dsize%3A%2085%25%3B%0A%7D%0Ap%20%3E%20code%2C%20li%20%3E%20code%20%7B%0Apadding%3A%202px%200px%3B%0A%7D%0Adiv%2Efigure%20%7B%0Atext%2Dalign%3A%20center%3B%0A%7D%0Aimg%20%7B%0Abackground%2Dcolor%3A%20%23FFFFFF%3B%0Apadding%3A%202px%3B%0Aborder%3A%201px%20solid%20%23DDDDDD%3B%0Aborder%2Dradius%3A%203px%3B%0Aborder%3A%201px%20solid%20%23CCCCCC%3B%0Amargin%3A%200%205px%3B%0A%7D%0Ah1%20%7B%0Amargin%2Dtop%3A%200%3B%0Afont%2Dsize%3A%2035px%3B%0Aline%2Dheight%3A%2040px%3B%0A%7D%0Ah2%20%7B%0Aborder%2Dbottom%3A%204px%20solid%20%23f7f7f7%3B%0Apadding%2Dtop%3A%2010px%3B%0Apadding%2Dbottom%3A%202px%3B%0Afont%2Dsize%3A%20145%25%3B%0A%7D%0Ah3%20%7B%0Aborder%2Dbottom%3A%202px%20solid%20%23f7f7f7%3B%0Apadding%2Dtop%3A%2010px%3B%0Afont%2Dsize%3A%20120%25%3B%0A%7D%0Ah4%20%7B%0Aborder%2Dbottom%3A%201px%20solid%20%23f7f7f7%3B%0Amargin%2Dleft%3A%208px%3B%0Afont%2Dsize%3A%20105%25%3B%0A%7D%0Ah5%2C%20h6%20%7B%0Aborder%2Dbottom%3A%201px%20solid%20%23ccc%3B%0Afont%2Dsize%3A%20105%25%3B%0A%7D%0Aa%20%7B%0Acolor%3A%20%230033dd%3B%0Atext%2Ddecoration%3A%20none%3B%0A%7D%0Aa%3Ahover%20%7B%0Acolor%3A%20%236666ff%3B%20%7D%0Aa%3Avisited%20%7B%0Acolor%3A%20%23800080%3B%20%7D%0Aa%3Avisited%3Ahover%20%7B%0Acolor%3A%20%23BB00BB%3B%20%7D%0Aa%5Bhref%5E%3D%22http%3A%22%5D%20%7B%0Atext%2Ddecoration%3A%20underline%3B%20%7D%0Aa%5Bhref%5E%3D%22https%3A%22%5D%20%7B%0Atext%2Ddecoration%3A%20underline%3B%20%7D%0A%0Acode%20%3E%20span%2Ekw%20%7B%20color%3A%20%23555%3B%20font%2Dweight%3A%20bold%3B%20%7D%20%0Acode%20%3E%20span%2Edt%20%7B%20color%3A%20%23902000%3B%20%7D%20%0Acode%20%3E%20span%2Edv%20%7B%20color%3A%20%2340a070%3B%20%7D%20%0Acode%20%3E%20span%2Ebn%20%7B%20color%3A%20%23d14%3B%20%7D%20%0Acode%20%3E%20span%2Efl%20%7B%20color%3A%20%23d14%3B%20%7D%20%0Acode%20%3E%20span%2Ech%20%7B%20color%3A%20%23d14%3B%20%7D%20%0Acode%20%3E%20span%2Est%20%7B%20color%3A%20%23d14%3B%20%7D%20%0Acode%20%3E%20span%2Eco%20%7B%20color%3A%20%23888888%3B%20font%2Dstyle%3A%20italic%3B%20%7D%20%0Acode%20%3E%20span%2Eot%20%7B%20color%3A%20%23007020%3B%20%7D%20%0Acode%20%3E%20span%2Eal%20%7B%20color%3A%20%23ff0000%3B%20font%2Dweight%3A%20bold%3B%20%7D%20%0Acode%20%3E%20span%2Efu%20%7B%20color%3A%20%23900%3B%20font%2Dweight%3A%20bold%3B%20%7D%20%20code%20%3E%20span%2Eer%20%7B%20color%3A%20%23a61717%3B%20background%2Dcolor%3A%20%23e3d2d2%3B%20%7D%20%0A" rel="stylesheet" type="text/css" />
+
+</head>
+
+<body>
+
+
+
+
+<h1 class="title toc-ignore">Using masstrixR - Create a SQLite database and perform MS1 search</h1>
+<h4 class="author"><em>Michael</em></h4>
+<h4 class="date"><em>3 August 2018</em></h4>
+
+
+
+<div id="masstrix-in-r---annotating-ms1-data-made-easy" class="section level1">
+<h1>MassTRIX in R - Annotating MS1 data made easy…</h1>
+<div id="introduction" class="section level2">
+<h2>Introduction</h2>
+<p>Annotation of MS<sup>1</sup> data with potential metabolites from different databases. This achieved by calculating theoretical adduct masses from metabolites and compare measured m/z values with theoretical ones within a give error (in Da or ppm). The masstrixR package uses SQLite for back-end databases storing theoretical adduct masses of a given metabolite database (e.g. YMDB). Two possibilities exist. Either a persistent database stored in a single .sqlite file can be generated and re-used or a in-memory database can be generated “on-the-fly”. Additionally, large database stored in a .sqlite file can be read into memory for enhanced performance.</p>
+</div>
+<div id="reading-a-db" class="section level2">
+<h2>Reading a DB</h2>
+<p>Metabolite databases from which adduct databases shall be created have to be supplied as tab separated text file with the following headers:</p>
+<p>id smiles inchi inchikey formula name exactmass</p>
+<p>Header names have to be exactly the same as stated above.</p>
+<div class="sourceCode"><pre class="sourceCode r"><code class="sourceCode r"><span class="kw">library</span>(masstrixR)
+
+chebiExample &lt;-<span class="st"> </span><span class="kw">system.file</span>(<span class="st">&quot;extdata&quot;</span>, <span class="st">&quot;chebi_20181015.txt&quot;</span>, <span class="dt">package =</span> <span class="st">'masstrixR'</span>)
+
+<span class="co"># read YMDB text file and create example .sqlite fil</span>
+compoundList &lt;-<span class="st"> </span><span class="kw">data.frame</span>(<span class="kw">read.table</span>(chebiExample, <span class="dt">sep =</span> <span class="st">&quot;</span><span class="ch">\t</span><span class="st">&quot;</span>, <span class="dt">header =</span> T, <span class="dt">stringsAsFactors =</span> F, <span class="dt">comment.char =</span> <span class="st">&quot;~&quot;</span>))</code></pre></div>
+</div>
+<div id="generate-sqlite-database-and-store-to-file" class="section level2">
+<h2>Generate SQLite database and store to file</h2>
+<p>A persistent .sqlite database file containing pre-calculated adduct masses can be generated from this compound list using functions from masstrixR. The adducts that shall be covered in this database have to be defined before. The <code>getAdductNames()</code> function returns a vector with all adduct names used in <code>masstrixR</code>. The following example creates a DB with [M+H]<sup>+</sup> and [M+Na]<sup>+</sup> adducts. The <code>createDb()</code> function creates a .sqlite file. A data path to which the SQLite shall be safed with a name has to be supplied. After succesfull creation the data path is returned.</p>
+<div class="sourceCode"><pre class="sourceCode r"><code class="sourceCode r"><span class="co"># list all adducts</span>
+<span class="kw">getAdductNames</span>()</code></pre></div>
+<pre><code>##  [1] &quot;M+3H&quot;      &quot;M+2H+Na&quot;   &quot;M+H+2Na&quot;   &quot;M+3Na&quot;     &quot;M+2H&quot;     
+##  [6] &quot;M+H+NH4&quot;   &quot;M+H+K&quot;     &quot;M+H+Na&quot;    &quot;M+ACN+2H&quot;  &quot;M+2Na&quot;    
+## [11] &quot;M+2ACN+2H&quot; &quot;M+3ACN+2H&quot; &quot;M+H&quot;       &quot;M+NH4&quot;     &quot;M+Na&quot;     
+## [16] &quot;M+CH3OH+H&quot; &quot;M+K&quot;       &quot;M+ACN+H&quot;   &quot;M+2Na-H&quot;   &quot;M+iPrOH+H&quot;
+## [21] &quot;M+ACN+Na&quot;  &quot;M+2K-H&quot;    &quot;M+DMSO+H&quot;  &quot;M+2ACN+H&quot;  &quot;2M+H&quot;     
+## [26] &quot;2M+NH4&quot;    &quot;2M+Na&quot;     &quot;2M+K&quot;      &quot;2M+ACN+H&quot;  &quot;2M+ACN+Na&quot;
+## [31] &quot;M&quot;         &quot;M-3H&quot;      &quot;M-2H&quot;      &quot;M-H&quot;       &quot;M+Na-2H&quot;  
+## [36] &quot;M+Cl&quot;      &quot;M+K-2H&quot;    &quot;M+FA-H&quot;    &quot;M+HAc-H&quot;   &quot;M+Br&quot;     
+## [41] &quot;M+TFA-H&quot;   &quot;2M-H&quot;      &quot;2M+FA-H&quot;   &quot;2M+HAc-H&quot;  &quot;3M-H&quot;</code></pre>
+<div class="sourceCode"><pre class="sourceCode r"><code class="sourceCode r"><span class="co"># adducts used for DB generation</span>
+adducts &lt;-<span class="st"> </span><span class="kw">c</span>(<span class="st">&quot;M+H&quot;</span>, <span class="st">&quot;M+Na&quot;</span>)
+
+<span class="co"># create compound list for DB creation</span>
+newCompoundList &lt;-<span class="st"> </span><span class="kw">prepareCompoundList</span>(compoundList, <span class="dt">adductList =</span> adducts, <span class="dt">rt =</span> <span class="ot">FALSE</span>, <span class="dt">ccs =</span> <span class="ot">FALSE</span>, <span class="dt">extId =</span> <span class="ot">FALSE</span>)</code></pre></div>
+<pre><code>## [1] &quot;no RT&quot;
+## [1] &quot;no CCS&quot;
+## [1] &quot;no external ids&quot;
+## [1] &quot;commmon adducts&quot;</code></pre>
+<div class="sourceCode"><pre class="sourceCode r"><code class="sourceCode r"><span class="co"># check if compound list is valid and create SQLite DB</span>
+<span class="cf">if</span>(<span class="kw">validateCompoundList</span>(newCompoundList, <span class="dt">rt =</span> <span class="ot">FALSE</span>, <span class="dt">ccs =</span> <span class="ot">FALSE</span>)) {
+  dbFileName &lt;-<span class="st"> </span><span class="kw">createDb</span>(newCompoundList, <span class="st">&quot;chebi_20181015_pos_MH_MNa&quot;</span>)
+}
+<span class="kw">print</span>(dbFileName)</code></pre></div>
+<pre><code>## [1] &quot;chebi_20181015_pos_MH_MNa.sqlite&quot;</code></pre>
+</div>
+<div id="annotation-of-lc-ms-data" class="section level2">
+<h2>Annotation of LC-MS data</h2>
+<p>The database can be now used for annotation of MS<sup>1</sup> data from different experiments. The supplied example file reads a .gda file exported from Genedata Expressionist for MS 11.0. A list with column and row annotations as well as the actual data is returned.</p>
+<div class="sourceCode"><pre class="sourceCode r"><code class="sourceCode r"><span class="co"># read example .gda file</span>
+gdaFile &lt;-<span class="st"> </span><span class="kw">system.file</span>(<span class="st">&quot;extdata&quot;</span>, <span class="st">&quot;NaAcHILICPos_Cluster.gda&quot;</span>, <span class="dt">package =</span> <span class="st">'masstrixR'</span>)
+exampleGDA &lt;-<span class="st"> </span><span class="kw">readGdaFile</span>(gdaFile)</code></pre></div>
+<pre><code>## [1] 15</code></pre>
+<div class="sourceCode"><pre class="sourceCode r"><code class="sourceCode r"><span class="co"># get row annotations with m/z values</span>
+rowAnno &lt;-<span class="st"> </span>exampleGDA[[<span class="dv">3</span>]]
+rowAnno<span class="op">$</span>ClusterName &lt;-<span class="st"> </span><span class="kw">row.names</span>(rowAnno)
+
+<span class="co">#annotate</span>
+annotationResults &lt;-<span class="st"> </span><span class="kw">mzSearch</span>(rowAnno, dbFileName, <span class="dt">mzTol =</span> <span class="fl">0.005</span>, <span class="dt">mzTolType =</span> <span class="st">&quot;abs&quot;</span>)</code></pre></div>
+<pre><code>## Warning: Closing open result set, pending rows</code></pre>
+<pre><code>## Warning in data.frame(..., check.names = FALSE): row names were found from
+## a short variable and have been discarded
+
+## Warning in data.frame(..., check.names = FALSE): row names were found from
+## a short variable and have been discarded
+
+## Warning in data.frame(..., check.names = FALSE): row names were found from
+## a short variable and have been discarded
+
+## Warning in data.frame(..., check.names = FALSE): row names were found from
+## a short variable and have been discarded
+
+## Warning in data.frame(..., check.names = FALSE): row names were found from
+## a short variable and have been discarded
+
+## Warning in data.frame(..., check.names = FALSE): row names were found from
+## a short variable and have been discarded
+
+## Warning in data.frame(..., check.names = FALSE): row names were found from
+## a short variable and have been discarded</code></pre>
+</div>
+<div id="fast-coding" class="section level2">
+<h2>Fast coding</h2>
+<p>If no persistent .sqlite file is needed or only a fast lookup of specific m/z values shall be performed the <code>mzLookUp()</code> function can be used to perform the same code as above in a single line.</p>
+<div class="sourceCode"><pre class="sourceCode r"><code class="sourceCode r"><span class="co"># perform m/z look up</span>
+annotationResultsLookup &lt;-<span class="st"> </span><span class="kw">mzLookUp</span>(rowAnno, newCompoundList, <span class="dt">mzTol =</span> <span class="fl">0.005</span>, <span class="dt">mzTolType =</span> <span class="st">&quot;abs&quot;</span>)</code></pre></div>
+<pre><code>## Warning in data.frame(..., check.names = FALSE): row names were found from
+## a short variable and have been discarded
+
+## Warning in data.frame(..., check.names = FALSE): row names were found from
+## a short variable and have been discarded
+
+## Warning in data.frame(..., check.names = FALSE): row names were found from
+## a short variable and have been discarded
+
+## Warning in data.frame(..., check.names = FALSE): row names were found from
+## a short variable and have been discarded
+
+## Warning in data.frame(..., check.names = FALSE): row names were found from
+## a short variable and have been discarded
+
+## Warning in data.frame(..., check.names = FALSE): row names were found from
+## a short variable and have been discarded
+
+## Warning in data.frame(..., check.names = FALSE): row names were found from
+## a short variable and have been discarded</code></pre>
+</div>
+</div>
+
+
+
+<!-- dynamically load mathjax for compatibility with self-contained -->
+<script>
+  (function () {
+    var script = document.createElement("script");
+    script.type = "text/javascript";
+    script.src  = "https://mathjax.rstudio.com/latest/MathJax.js?config=TeX-AMS-MML_HTMLorMML";
+    document.getElementsByTagName("head")[0].appendChild(script);
+  })();
+</script>
+
+</body>
+</html>

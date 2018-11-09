@@ -1,8 +1,12 @@
 ---
-title: "Using masstrixR"
+title: "Using masstrixR - Create a SQLite database and perform MS1 search"
 author: "Michael"
 date: "3 August 2018"
-output: html_document
+output: rmarkdown::html_vignette
+vignette: >
+  %\VignetteIndexEntry{Using masstrixR - Create a SQLite database}
+  %\VignetteEngine{knitr::rmarkdown}
+  \usepackage[utf8]{inputenc}
 ---
 
 ```{r setup, include=FALSE}
@@ -26,10 +30,10 @@ Header names have to be exactly the same as stated above.
 ```{r read compound list}
 library(masstrixR)
 
-# read YMDB text file and create example .sqlite file
-compoundList <- data.frame(read.table("..\\DBs\\Txt\\ymdb_20180731.txt", sep = "\t", header = T, stringsAsFactors = F, comment.char = ""))
+chebiExample <- system.file("extdata", "chebi_20181015.txt", package = 'masstrixR')
 
-head(compoundList)
+# read YMDB text file and create example .sqlite fil
+compoundList <- data.frame(read.table(chebiExample, sep = "\t", header = T, stringsAsFactors = F, comment.char = "~"))
 ```
 
 ## Generate SQLite database and store to file
@@ -45,17 +49,24 @@ getAdductNames()
 # adducts used for DB generation
 adducts <- c("M+H", "M+Na")
 
-# create SQLite DB
-dbFileName <- createDb(compoundList, "..\\DBs\\SQLite\\ymdb_20180731_MH_MNa", adducts)
+# create compound list for DB creation
+newCompoundList <- prepareCompoundList(compoundList, adductList = adducts, rt = FALSE, ccs = FALSE, extId = FALSE)
+
+# check if compound list is valid and create SQLite DB
+if(validateCompoundList(newCompoundList, rt = FALSE, ccs = FALSE)) {
+  dbFileName <- createDb(newCompoundList, "chebi_20181015_pos_MH_MNa")
+}
+print(dbFileName)
 ```
 
 ## Annotation of LC-MS data
 
 The database can be now used for annotation of MS^1^ data from different experiments. The supplied example file reads a .gda file exported from Genedata Expressionist for MS 11.0. A list with column and row annotations as well as the actual data is returned.
 
-```{r read .gda file}
+```{r read .gda file, message=FALSE}
 # read example .gda file
-exampleGDA <- readGdaFile("..\\example\\NaAcHILICPos_Cluster.gda")
+gdaFile <- system.file("extdata", "NaAcHILICPos_Cluster.gda", package = 'masstrixR')
+exampleGDA <- readGdaFile(gdaFile)
 
 # get row annotations with m/z values
 rowAnno <- exampleGDA[[3]]
@@ -70,9 +81,7 @@ annotationResults <- mzSearch(rowAnno, dbFileName, mzTol = 0.005, mzTolType = "a
 
 If no persistent .sqlite file is needed or only a fast lookup of specific m/z values shall be performed the <code>mzLookUp()</code> function can be used to perform the same code as above in a single line.
 
-```{r}
+```{r, message=FALSE}
 # perform m/z look up
-annotationResultsLookup <- mzLookUp(rowAnno, compoundList, adductList = c("M+H", "M+Na"), mzTol = 0.005, tolType = "abs")
+annotationResultsLookup <- mzLookUp(rowAnno, newCompoundList, mzTol = 0.005, mzTolType = "abs")
 ```
-
-

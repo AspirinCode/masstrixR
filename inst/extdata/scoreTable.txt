@@ -1,0 +1,12 @@
+# score margins for masstrixR mz matching
+masstrixR.mz_rel_good=0.1
+masstrixR.mz_rel_acceptable=0.5
+masstrixR.mz_rel_bad=1.0
+# score margins for masstrixR RT matching
+masstrixR.rt_abs_good=0.2
+masstrixR.rt_abs_acceptable=0.5
+masstrixR.rt_abs_bad=1.0
+# score margins for masstrixR CCS matching
+masstrixR.ccs_rel_good=0.5
+masstrixR.ccs_rel_acceptable=1.0
+masstrixR.ccs_rel_bad=2.5

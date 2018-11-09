@@ -8,13 +8,14 @@ Description: The masstrixR package helps with annotation of MS1 data with potent
 License: GPL-2
 Encoding: UTF-8
 LazyData: true
+biocView:
+  MSnbase (>= 2.6.3),
+	enviPat (>= 2.2)
 Imports:
 	DBI (>= 1.0.0),
 	ggplot2 (>= 2.2.1),
-	MSnbase (>= 2.6.3),
-	enviPat (>= 2.2),
-	stringr (>= 1.3.1),
-	tidyr,
-	dplyr
+	stringr (>= 1.3.1)
 Suggests:
-	testthat
+	testthat, knitr, rmarkdown
+VignetteBuilder: knitr
+RoxygenNote: 6.1.0
