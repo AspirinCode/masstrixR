@@ -107,9 +107,13 @@ readGdaFile <- function(pathToFile) {
   return(list(dataDf, colAnnoDf, rowAnnoDf))
 }
 
-###
-# function to read pmt
-###
+#' This function parses a Genedata Expressionist Peak Match Table
+#'
+#' @param pathTofile Path to .gda file that shall be loaded
+#' @return Returns a data frame with the Cluster ID, scanIndex and Sample name
+#' @examples
+#' xxx
+#' @export
 readPmt <- function(pathToFile) {
 
   # read file line by line
@@ -157,7 +161,8 @@ readPmt <- function(pathToFile) {
   data <- data[which(!data$content == ""),]
 
   # stretch data
-  data <- tidyr::separate_rows(data, convert = TRUE)
+  #data <- tidyr::separate_rows(data, convert = TRUE)
+  data <- tidyr::separate_rows(data, content, sep = ",")
 
   return(data)
 

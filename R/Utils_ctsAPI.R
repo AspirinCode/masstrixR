@@ -6,11 +6,24 @@
 }
 
 
+#' This function uses the CTS Webservice from the Fiehnlab to convert IDs
+#'
+#' @param from format of original identifier (kegg, hmdb, inchikey)
+#' @param to format of identifier to convert to
+#' @param queryString query that shall be converted
+#'
+#' @export
+getExternalDbIds <- function(from, to, queryString) {
 
-getExternalDbIds <- function(inchikey, db) {
-  from <- "inchikey"
-  to <- db
-  queryString <- inchikey
+  # sanity checks
+  # check from and to
+  if(!any(from %in% c("InChIKey", "Chemical Name", "KEGG" ,"Human Metabolome Database", "ChEBI", "BioCyc"))) {
+    stop("from not correct, use InChIKey, Chemical Name, KEGG ,Human Metabolome Database, ChEBI or BioCyc")
+  }
+
+  if(!any(to %in% c("InChIKey", "Chemical Name", "KEGG" ,"Human Metabolome Database", "ChEBI", "BioCyc"))) {
+    stop("to not correct, use InChIKey, Chemical Name, KEGG ,Human Metabolome Database, ChEBI or BioCyc")
+  }
 
   # construct url for GET request
   baseUrl <- "http://cts.fiehnlab.ucdavis.edu/service/convert"

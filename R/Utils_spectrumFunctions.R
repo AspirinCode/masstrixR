@@ -57,6 +57,11 @@ bin_Spectra <- function(object1, object2, binSize = 1L,
   list(x = ints, mids = (breaks[-nbrks] + breaks[-1L]) / 2L)
 }
 
+
+#'
+#'
+#'
+#' @export
 alignSpectra <- function(x, y, mzTol = 0.005, treshold = 0.01, returnSpectra = FALSE) {
 
   top <- data.frame(mz = mz(x), intensity = intensity(x))
@@ -69,7 +74,6 @@ alignSpectra <- function(x, y, mzTol = 0.005, treshold = 0.01, returnSpectra = F
   bottom <- bottom[which(bottom$intensity > treshold),]
 
   ## align the m/z axis of the two spectra, the bottom spectrum is used as the reference
-
   for(i in 1:nrow(bottom)) {
     top[,1][bottom[,1][i] >= top[,1] - mzTol & bottom[,1][i] <= top[,1] + mzTol] <- bottom[,1][i]
   }
@@ -95,6 +99,4 @@ alignSpectra <- function(x, y, mzTol = 0.005, treshold = 0.01, returnSpectra = F
   } else {
     return(alignment)
   }
-
-
 }

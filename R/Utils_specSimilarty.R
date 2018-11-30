@@ -48,12 +48,12 @@ isoPatternSimilarity <- function(x, y, mzTol = 0.005, ...) {
 #'
 #'
 #' @export
-forwardDotProduct <- function(x, y, align = FALSE, mzTol = 0.005, ...) {
+forwardDotProduct <- function(x, y, align = FALSE, mzTol = 0.005, treshold = 0.01, ...) {
 
   if(align) {
 
     #use aligned spectra
-    alignedSpectra <- alignSpectra(x, y, mzTol = mzTol)
+    alignedSpectra <- alignSpectra(x, y, mzTol = mzTol, treshold = treshold)
 
     # calculate dot product
     dotproduct <- dotproduct(alignedSpectra$intensity.top, alignedSpectra$intensity.bottom)
@@ -80,12 +80,12 @@ forwardDotProduct <- function(x, y, align = FALSE, mzTol = 0.005, ...) {
 #'
 #'
 #' @export
-reverseDotProduct <- function(x, y, align = FALSE, mzTol = 0.005, ...) {
+reverseDotProduct <- function(x, y, align = FALSE, mzTol = 0.005, treshold = 0.01, ...) {
 
   if(align) {
 
     #use aligned spectra
-    alignedSpectra <- alignSpectra(x, y, mzTol = mzTol)
+    alignedSpectra <- alignSpectra(x, y, mzTol = mzTol, treshold = treshold)
 
     # use only peals with are present in spec2
     alignedSpectra <- alignedSpectra[which(alignedSpectra$intensity.bottom >0), ]
@@ -114,6 +114,38 @@ reverseDotProduct <- function(x, y, align = FALSE, mzTol = 0.005, ...) {
   }
 }
 
+
+#' Calculate reverse Dotproduct
+#'
+#'
+#' @export
+commonPeaks <- function(x, y, align = FALSE, mzTol = 0.005, treshold = 0.01, ...) {
+
+  if(align) {
+
+    #use aligned spectra
+    alignedSpectra <- alignSpectra(x, y, mzTol = mzTol, treshold = treshold)
+
+    commonPeaks <- nrow(alignedSpectra[which(alignedSpectra$intensity.top > 0 & alignedSpectra$intensity.bottom > 0),])
+
+    return(commonPeaks)
+
+
+
+  } else {
+
+    # use binned spectra
+    binnedSpectra <- bin_Spectra(x, y, ...)
+    inten <- as.data.frame(lapply(binnedSpectra, intensity))
+    names(inten) <- c("spec1", "spec2")
+
+    commonPeaks <- nrow(inten[which(inten$spec1 > 0 & inten$spec2 > 0),])
+
+    return(commonPeaks)
+
+  }
+}
+
 #' Mass shift modified Dotproduct (GNPS)
 #'
 #' Inspired by GNPS
@@ -137,5 +169,3 @@ xRank <- function() {
 dotproduct <- function(x, y) {
   as.vector(x %*% y) / (sqrt(sum(x*x)) * sqrt(sum(y*y)))
 }
-
-
