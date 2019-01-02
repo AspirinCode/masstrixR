@@ -9,14 +9,19 @@ output: html_document
 knitr::opts_chunk$set(echo = TRUE)
 ```
 
-## R Markdown
+## Introduction
 
-This is an R Markdown document. Markdown is a simple formatting syntax for authoring HTML, PDF, and MS Word documents. For more details on using R Markdown see <http://rmarkdown.rstudio.com>.
+<code>masstrixR</code> performs annotation of MS^1^ data with putative metabolites. In order to perfrom this annotation a fitting database of metabolites is required. <code>masstrixR</code> uses the SQLite database framework for fast and efficient searching. Measured masses are compared with theoretical adduct masses of metabolites of interest withing a certain mass error, either defined as absolute error in Da or relative error in ppm.
+Databases for <code>masstrixR</code> are generated from compound lists and adduct definitions. <code>masstrixR</code> contains calculation rules for several possible adducts. Adducts are referenced by their normal nomenclature, e.g. [M+H]+.
 
-When you click the **Knit** button a document will be generated that includes both content as well as the output of any embedded R code chunks within the document. You can embed an R code chunk like this:
+## Working with adducts
 
-```{r cars}
-summary(cars)
+The adduct calculation rules are defined in a list and contain an additive and multiplicative part, as well as subtractive and additive part for the generation of ion sum formulas. The function <code>getAdductCalc()</code> returns a list with this calculation rules.
+
+```{r adducts}
+library(masstrixR)
+adductCalc <- getAdductCalc()
+adductCalc["[M+H]+"]
 ```
 
 ## Including Plots
