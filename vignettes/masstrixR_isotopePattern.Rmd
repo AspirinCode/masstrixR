@@ -40,6 +40,7 @@ Genedata Expressionist for MS 11.0 can perform isotope pattern grouping, but doe
 
 ```{r read data and annotate}
 # load required libraries
+<<<<<<< HEAD
 # library(stringr)
 # 
 # # read cluster
@@ -61,13 +62,69 @@ Genedata Expressionist for MS 11.0 can perform isotope pattern grouping, but doe
 # # read YMDB text file and annotated example data
 # compoundList <- data.frame(read.table("..\\DBs\\Txt\\ymdb_20180731.txt", sep = "\t", header = T, stringsAsFactors = F, comment.char = ""))
 # annotationResultsLookup <- mzLookUp(clusterRowAnno[c("cluster","m.z", "RT")], compoundList, mzTol = 0.005, tolType = "abs", c("M+H", "M+Na"))
+=======
+library(masstrixR)
+library(stringr)
+
+# read cluster
+exampleGDAClusters <- readGdaFile(system.file("extdata", "NaAcHILICPos_Cluster.gda", package = 'masstrixR'))
+clusterRowAnno <- exampleGDAClusters[[3]]
+clusterRowAnno$Cluster <- row.names(clusterRowAnno)
+
+# read peaks
+exampleGDAPeaks <- readGdaFile(system.file("extdata", "NaAcHILICPos_Peaks.gda", package = 'masstrixR'))
+peaksRowAnno <- exampleGDAPeaks[[3]]
+peaksRowAnno$Peak <- row.names(peaksRowAnno)
+peaksRowAnno$Cluster <- paste("Cluster_", peaksRowAnno$`Cluster [C]`, sep = "")
+
+# get sample names
+sampleNames <- exampleGDAClusters[[2]]$SampleNames
+
 ```
+
+## Reconstruct isotope pattern
+
+Isotope pattern can be reconstructed from a file containing peaks and clusters.
+
+```{r}
+# get peak data to reconstruct isotope pattern
+peaksData <- exampleGDAPeaks[[1]]
+
+# create data to generate isotope pattern
+peaks <- merge(peaksData, peaksRowAnno, by = 0)
+
+# generate isotope pattern
+isoPatternList <- reconstructIsoPattern(peaks, sampleNames)
+head(isoPatternList)
+
+# combine isotope pattern
+combinedIsoPatternList <- combineSpectra(isoPatternList, fcol = "Cluster", mzd = 0.005, fun = consensusSpectrum)
+
+plot(mz(combinedIsoPatternList[[1]]), intensity(combinedIsoPatternList[[1]]), type = "h")
+>>>>>>> masstrixR_RaMoNA_merge
+```
+
 
 ## Perform isotope pattern matching
 
 
 ```{r}
+# read YMDB text file and annotated example data
+compoundList <- data.frame(read.table(system.file("extdata", "ymdb_20180731.txt", package = 'masstrixR'), sep = "\t", header = T, stringsAsFactors = F, comment.char = ""))
+
+adducts <- c("[M+H]+", "[M+Na]+")
+
+# create compound list for DB creation
+newCompoundList <- prepareCompoundList(compoundList, adductList = adducts, rt = FALSE, ccs = FALSE, extId = FALSE)
+
+annotationResultsLookup <- mzLookUp(clusterRowAnno[c("Cluster","m.z", "RT")], newCompoundList, mzTol = 0.005, mzTolType = "abs")
+```
+
+
+
+```{r}
 # iterate through annotation results
+<<<<<<< HEAD
 # for(i in 1:nrow(annotationResultsLookup)) {
 #   
 #   annotatedCluster <- annotationResultsLookup$cluster[i]
@@ -113,6 +170,41 @@ Genedata Expressionist for MS 11.0 can perform isotope pattern grouping, but doe
 #   annotationResultsLookup$isoMatch[i] <- 1000 - compareSpectra(measured, theoretical, fun = "dotproduct") * 1000
 #   
 # }
+=======
+for(i in 1:nrow(annotationResultsLookup)) {
+
+  # get cluster id
+  cluster <- annotationResultsLookup$Cluster[i]
+  
+  print(cluster)
+  
+  # get measured spectrum
+  measured <- combinedIsoPatternList[cluster][[1]]
+  
+  plot(mz(measured), intensity(measured), type = "h")
+
+  # predict theoretical spectrum
+  theoretical <- predictIsoPattern(annotationResultsLookup$ionFormula[i], 1, treshold = 0.01, resolution = 15000, plotit = FALSE)
+  
+  mz <- mz(theoretical)
+  int <- intensity(theoretical) / 100 * max(intensity(measured))
+  
+  mz <- mz[int >= 2500]
+  int <- int[int >= 2500]
+  
+  theoretical@mz <- mz
+  theoretical@intensity <- int
+  
+  plot(mz(theoretical), intensity(theoretical), type = "h")
+
+  # compare measured and theoretical spectrum
+  similarity <- compareSpectra(measured, theoretical, fun = isoPatternSimilarity, mzTol = 0.005)
+  
+  print(similarity)
+  
+  annotationResultsLookup$isoPatternSimilarity[i] <- similarity
+}
+>>>>>>> masstrixR_RaMoNA_merge
 
 
 ```

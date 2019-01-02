@@ -156,3 +156,17 @@ generateChemFormula <- function(parsedChemFormula) {
   # return formula
   return(chemFormulaRecon)
 }
+
+#' standardize formula
+#'
+#'
+standardizeChemFormula <- function(chemFormula) {
+
+  # parse and reconstruct
+  parsedChemFormula <- parseChemFormula(chemFormula)
+  stdChemFormula <- generateChemFormula(parsedChemFormula)
+
+  # return
+  return(stdChemFormula)
+}
+

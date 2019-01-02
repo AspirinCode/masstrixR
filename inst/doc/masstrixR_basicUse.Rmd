@@ -1,0 +1,87 @@
+---
+title: "Using masstrixR - Create a SQLite database and perform MS1 search"
+author: "Michael"
+date: "3 August 2018"
+output: rmarkdown::html_vignette
+vignette: >
+  %\VignetteIndexEntry{Using masstrixR - Create a SQLite database}
+  %\VignetteEngine{knitr::rmarkdown}
+  \usepackage[utf8]{inputenc}
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+# MassTRIX in R - Annotating MS1 data made easy...
+
+## Introduction
+
+Annotation of MS^1^ data with potential metabolites from different databases. This achieved by calculating theoretical adduct masses from metabolites and compare measured m/z values with theoretical ones within a give error (in Da or ppm).
+The masstrixR package uses SQLite for back-end databases storing theoretical adduct masses of a given metabolite database (e.g. YMDB). Two possibilities exist. Either a persistent database stored in a single .sqlite file can be generated and re-used or a in-memory database can be generated "on-the-fly". Additionally, large database stored in a .sqlite file can be read into memory for enhanced performance.
+
+## Reading a DB
+
+Metabolite databases from which adduct databases shall be created have to be supplied as tab separated text file with the following headers:
+
+id	smiles	inchi	inchikey	formula	name	exactmass
+
+Header names have to be exactly the same as stated above.
+
+```{r read compound list}
+library(masstrixR)
+
+chebiExample <- system.file("extdata", "chebi_20181015.txt", package = 'masstrixR')
+
+# read YMDB text file and create example .sqlite fil
+compoundList <- data.frame(read.table(chebiExample, sep = "\t", header = T, stringsAsFactors = F, comment.char = "~"))
+```
+
+## Generate SQLite database and store to file
+
+A persistent .sqlite database file containing pre-calculated adduct masses can be generated from this compound list using functions from masstrixR. The adducts that shall be covered in this database have to be defined before. The <code>getAdductNames()</code> function returns a vector with all adduct names used in <code>masstrixR</code>.
+The following example creates a DB with [M+H]^+^ and [M+Na]^+^ adducts. The <code>createDb()</code> function creates a .sqlite file. A data path to which the SQLite shall be safed with a name has to be supplied. After succesfull creation the data path is returned.
+
+
+```{r generate sqlite}
+# list all adducts
+getAdductNames()
+
+# adducts used for DB generation
+adducts <- c("M+H", "M+Na")
+
+# create compound list for DB creation
+newCompoundList <- prepareCompoundList(compoundList, adductList = adducts, rt = FALSE, ccs = FALSE, extId = FALSE)
+
+# check if compound list is valid and create SQLite DB
+if(validateCompoundList(newCompoundList, rt = FALSE, ccs = FALSE)) {
+  dbFileName <- createDb(newCompoundList, "chebi_20181015_pos_MH_MNa")
+}
+print(dbFileName)
+```
+
+## Annotation of LC-MS data
+
+The database can be now used for annotation of MS^1^ data from different experiments. The supplied example file reads a .gda file exported from Genedata Expressionist for MS 11.0. A list with column and row annotations as well as the actual data is returned.
+
+```{r read .gda file, message=FALSE}
+# read example .gda file
+gdaFile <- system.file("extdata", "NaAcHILICPos_Cluster.gda", package = 'masstrixR')
+exampleGDA <- readGdaFile(gdaFile)
+
+# get row annotations with m/z values
+rowAnno <- exampleGDA[[3]]
+rowAnno$ClusterName <- row.names(rowAnno)
+
+#annotate
+annotationResults <- mzSearch(rowAnno, dbFileName, mzTol = 0.005, mzTolType = "abs")
+
+```
+
+## Fast coding
+
+If no persistent .sqlite file is needed or only a fast lookup of specific m/z values shall be performed the <code>mzLookUp()</code> function can be used to perform the same code as above in a single line.
+
+```{r, message=FALSE}
+# perform m/z look up
+annotationResultsLookup <- mzLookUp(rowAnno, newCompoundList, mzTol = 0.005, mzTolType = "abs")
+```

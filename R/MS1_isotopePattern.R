@@ -56,3 +56,105 @@ predictIsoPattern <-
     # return values
     return(isotopeSpectrum)
   }
+
+
+#' Reconstruct isotope pattern from gda files
+#'
+#'
+reconstructIsoPattern <- function(peaks, sampleNames) {
+
+  clusterList <- unique(peaks$Cluster)
+
+  isoPatternList <- new("Spectra")
+
+  for(cluster in clusterList) {
+
+    # get m/z values
+    mz <- peaks$m.z[which(peaks$Cluster == cluster)]
+
+    for(sample in sampleNames) {
+
+      # get intensities for each sample
+      int <- peaks[which(peaks$Cluster == cluster), sample]
+      int[is.na(int)] <- 0.0
+
+      ms1spec <- new("Spectrum1",
+                     mz = mz,
+                     intensity = int,
+                     centroided = TRUE)
+
+      # create new Spectra object
+      isoPattern <- Spectra(ms1spec)
+
+      # add annotation
+      mcols(isoPattern)$Cluster <- cluster
+      mcols(isoPattern)$sample <- sample
+
+      isoPatternList <- append(isoPatternList, isoPattern)
+    }
+
+  }
+
+  return(isoPatternList)
+}
+
+#' Function to score isotope pattern
+#'
+scoreIsoPattern <- function(filteredAnnotationResult, measuredIsotopePattern, returnPredicted = FALSE) {
+
+  adductCalc <- getAdductCalc()
+
+  predictedIsotopePatternList <- new("Spectra")
+
+  # iterate over all results
+  for(i in 1:nrow(filteredAnnotationResult)) {
+
+    # get charge of annotation
+    adduct <- filteredAnnotationResult$adductType[i]
+    charge <- 1
+    ionFormula <- filteredAnnotationResult$ionFormula[i]
+
+
+    # predict isotope pattern
+    predictedIsotopePattern <- predictIsoPattern(ionFormula, charge = charge, plotit = FALSE)
+    predictedIsotopePattern@intensity <- predictedIsotopePattern@intensity / sum(predictedIsotopePattern@intensity)
+
+    # make new spectra object and add predicted spectrum
+    spectraClipboard <- Spectra(predictedIsotopePattern)
+    mcols(spectraClipboard)$cluster <- filteredAnnotationResults$cluster[i]
+    mcols(spectraClipboard)$ionFormula <- ionFormula
+    mcols(spectraClipboard)$adduct <- adduct
+
+    #append to list
+    predictedIsotopePatternList <- append(predictedIsotopePatternList, spectraClipboard)
+
+    # make new molecule from data in format for Rdisop
+    molecule <- list(formula = formula,
+                     score = 1,
+                     exactmass = max(mz(isotopePattern)),
+                     charge = charge,
+                     parity = "e",
+                     valid = "valid",
+                     DBE = 1,
+                     isotopes = list(matrix(c(mz(predictedIsotopePattern), intensity(predictedIsotopePattern)), nrow = 2, byrow = TRUE)))
+
+    # add score to data table
+    filteredAnnotationResult$score[i] <- isotopeScore(molecule, mz(measuredIsotopePattern), intensity(measuredIsotopePattern), z = charge)
+  }
+
+  # calculate final score
+  filteredAnnotationResult$score <- filteredAnnotationResult$score / sum(filteredAnnotationResult$score)
+
+  #make decision based on return option
+  if(returnPredicted) {
+
+    #return both results as list
+    return(list(filteredAnnotationResult, predictedIsotopePatternList))
+
+  } else {
+
+  # return result
+  return(filteredAnnotationResult)
+
+  }
+}
