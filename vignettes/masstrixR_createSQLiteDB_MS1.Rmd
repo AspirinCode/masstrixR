@@ -1,8 +1,10 @@
 ---
 title: "Create SQLiteDBs for masstrixR"
-author: "Michael"
-date: "30 November 2018"
-output: html_document
+author: "Dr. Michael Witting"
+date: "23 January 2019"
+output:
+  html_document: default
+  pdf_document: default
 ---
 
 ```{r setup, include=FALSE}
@@ -20,16 +22,123 @@ The adduct calculation rules are defined in a list and contain an additive and m
 
 ```{r adducts}
 library(masstrixR)
+
 adductCalc <- getAdductCalc()
 adductCalc["[M+H]+"]
 ```
 
-## Including Plots
+A list with all adduct names is returned by the function <code>getAdductNames</code> or separate for each ionization mode with <code>getAllPosModeAdducts</code> or <code>getAllNegModeAdducts</code>
 
-You can also embed plots, for example:
+```{r adductNames}
+# all adducts
+getAdductNames()
 
-```{r pressure, echo=FALSE}
-plot(pressure)
+# all positive mode adducts
+getAllPosModeAdducts()
+
+# all negative mode adducts
+getAllNegModeAdducts()
 ```
 
-Note that the `echo = FALSE` parameter was added to the code chunk to prevent printing of the R code that generated the plot.
+The supplied values can be used to calculate adduct masses of molecules. The example below shows how to calculate m/z values for different adducts.
+
+```{r adductExample}
+# exact mass for coenzyme A
+exactMass <- 767.115210
+
+# calculate m/z of [M+H]+ adduct
+exactMass * as.numeric(adductCalc[["[M+H]+"]][1]) + as.numeric(adductCalc[["[M+H]+"]][2])
+
+# calculate m/z of [M+Na]+ adduct
+exactMass * as.numeric(adductCalc[["[M+Na]+"]][1]) + as.numeric(adductCalc[["[M+Na]+"]][2])
+
+# calculate m/z of [M+2H]2+ adduct
+exactMass * as.numeric(adductCalc[["[M+2H]2+"]][1]) + as.numeric(adductCalc[["[M+2H]2+"]][2])
+
+# calculate m/z of [M-H]- adduct
+exactMass * as.numeric(adductCalc[["[M-H]-"]][1]) + as.numeric(adductCalc[["[M-H]-"]][2])
+```
+
+In parallel to adduct masses also the adduct or ion formula can be generated. This formula is useful for generation of isotopic patterns. The function <code>calcAdductFormula</code> directly accepts a chemical formula and a adduct name.
+
+```{r}
+# chemical formula of coenzyme A
+chemFormula <- "C21H36N7O16P3S"
+
+# generate formula of [M+H]+ adduct
+calcAdductFormula(chemFormula, "[M+H]+")
+
+# generate formula of [M+Na]+ adduct
+calcAdductFormula(chemFormula, "[M+Na]+")
+
+# generate formula of [M+2H]2+ adduct
+calcAdductFormula(chemFormula, "[M+2H]2+")
+```
+
+## Generating adduct databases
+
+Based on the functions for calculation of adduct masses <code>masstrixR</code> can generate complete SQLite databases that can be used for the annotation workflow. If the user supplies a defined input different functions allow the generation of a SQLite database in the format fitting for the use with <code>masstrixR</code>. Metabolites for database generation can be read from Excel, clipboard or a text file. The data requires the followin headers:
+
+* id
+* smiles
+* inchi
+* inchikey
+* formula
+* name
+* exactmass
+
+The column <code>id</code> shall contain a unique identifier. The fields <code>smiles</code>, <code>inchi</code> and <code>inchikey</code> are required as columns, but are not further used at the moment. <code>formula</code> has to contain a valid chemical formula for the respective metabolite, while <code>name</code> contains the name and <code>exactmass</code> the exact mass with minimum 4 digits after the comma. If no exact mass is supplied, it can be calculated based on the formula.
+
+The example below shows how to load data and to prepare a SQLite database for <code>masstrixR</code> from it. A example .txt file is loaded from the installation of <code>masstrixR</code>, but any data frame from any source with the same formatting works.
+
+```{r read compound list}
+# load required library
+library(readr)
+
+# get example file from package
+exampleFile <- system.file("extdata", "exampleData\\databases\\ymdb_example.txt", package = 'masstrixR')
+
+# read file into tibble
+compoundList <- read_tsv(exampleFile, col_types = cols(exactmass = col_double()))
+head(compoundList)
+```
+
+Next the adducts that have to be covered in the database need to be defined. Since no furhter matching for adducts is performed in the database search in the later steps of the annotation workflow it is advisable to generate databases only for a single ionization mode. Also to improve performance only the adducts really needed should be defined. In the example below [M+H]+ and [M+Na]+ adducts are choosen.
+
+```{r generate sqlite}
+# adducts used for DB generation
+adducts <- c("[M+H]+", "[M+Na]+")
+
+# create compound list for DB creation
+newCompoundList <- prepareCompoundList(compoundList, adductList = adducts)
+```
+
+Based on a valid compound list and selected adducts the <code>prepareCompoundList</code> function generates a new compound list that can be used with <code>masstrixR</code>. This list now contains several additional columns:
+
+* metaboliteID
+* adductType
+* adductMass
+* neutralMass
+* neutralFormula
+* ionFormula
+* metaboliteName
+* inchikey
+* inchi
+* smiles
+* rt
+* ccs
+* kegg
+* hmdb
+* chebi
+
+Many of these columns are required for more advanced workflows, e.g. combined m/z and RT search. They are explained in the respective vignettes. Since the new compound list represents a simple data frame it can be generated with any other software, e.g. in Excel, and then read to R. To check if the supplied list is valid the <code>validateCompoundList</code> is used. This function returns <code>TRUE</code> or <code>FALSE</code>. In the last step a SQLite database file is generated with the <code>createDb</code> function, which returns the file name of the generated database. The file is stored to the current working directory. SQLite files are portable and can be shared between users. The generated .sqlite file only has to be generated once and can be reused any time.
+
+```{r}
+# check if compound list is valid and create SQLite DB
+if(validateCompoundList(newCompoundList)) {
+  dbFileName <- createDb(newCompoundList, "example_pos_MH_MNa")
+}
+print(dbFileName)
+```
+
+Congratulations! You after running the code of this vignette you generate your first .sqlite database file that can be used with <code>masstrixR</code>. You can proceed with the vignette on m/z matching, which explains how a .sqlite file can be used with <code>masstrixR</code> to annotate MS^1^. data.

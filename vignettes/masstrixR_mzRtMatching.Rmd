@@ -1,7 +1,7 @@
 ---
 title: "Perform m/z and RT(I) matching with masstrixR"
-author: "Michael"
-date: "30 November 2018"
+author: "Dr. Michael Witting"
+date: "23 January 2019"
 output: html_document
 ---
 
@@ -9,22 +9,56 @@ output: html_document
 knitr::opts_chunk$set(echo = TRUE)
 ```
 
-## R Markdown
+## Introduction
 
-This is an R Markdown document. Markdown is a simple formatting syntax for authoring HTML, PDF, and MS Word documents. For more details on using R Markdown see <http://rmarkdown.rstudio.com>.
+Retention times are useful orthogonal information to m/z values for metabolite identification. <code>masstrixR</code> can combine m/z and RT search, when a suitable database is supplied. In this case the SQLite database that is used has to contain retention time information. The example below shows how a suitable compound list for combined m/z and RT search looks like and how it is used with <code>masstrixR</code>. The example data is taken from Stoffel et al. [1] and contains a small database of substances and their retention time indicies (RTIs) obtained on a reversed phase separation. The databsae is based on authentic chemical standards and unknown samples are derived from measurements of C. elegans metabolite extracts.
 
-When you click the **Knit** button a document will be generated that includes both content as well as the output of any embedded R code chunks within the document. You can embed an R code chunk like this:
+```{r read compound list}
+#load required library
+library(readr)
+library(masstrixR)
 
-```{r cars}
-summary(cars)
+# get example file from package
+exampleFile <- system.file("extdata", "exampleData\\Celegans_mz_rt\\rtidb.txt", package = 'masstrixR')
+
+# read file into tibble (the funciton from readr is used)
+compoundList <- read_tsv(exampleFile, col_types = cols(exactmass = col_double(),
+                                                       rt = col_double()))
+
+head(compoundList)
 ```
 
-## Including Plots
+In order to work with retention times the argument <code>rt</code>, which is by default set to <code>FALSE</code>, has to be set to <code>TRUE</code>. This will check if all entries in the compound list contain a RT value. This is necessary, because the database search also searches for a matching RT.
 
-You can also embed plots, for example:
+```{r generate sqlite}
+# adducts used for DB generation
+adducts <- c("[M+H]+", "[M+Na]+")
 
-```{r pressure, echo=FALSE}
-plot(pressure)
+# create compound list for DB creation
+newCompoundList <- prepareCompoundList(compoundList, adductList = adducts, rt = TRUE)
+
+# check if compound list is valid and create SQLite DB
+if(validateCompoundList(newCompoundList)) {
+  dbFileName <- createDb(newCompoundList, "example_pos_MH_MNa_withRT")
+}
+print(dbFileName)
 ```
 
-Note that the `echo = FALSE` parameter was added to the code chunk to prevent printing of the R code that generated the plot.
+Next, the example data is loaded. It contains one column called <code>RT</code>, which contains the caluclated RTIs for the samples and one column <code>RT.min</code> with the original retention time in minutes. The database search is performed as simultaneous search for fitting m/z-RT pairs. The allowed retention time deviation is defined in the <code>rtTol</code> field, while the type is either defined as <code>"abs"</code> or <code>"rel"</code> for absolute or relative error respectively. In the used example an absolute RTI error of 5 units is used. Please not that no testing if the RTs in database and in the data are in the same unit is performed.
+
+```{r}
+peakTableFile <- system.file("extdata", "exampleData\\Celegans_mz_rt\\peakTable.txt", package = 'masstrixR')
+peakTable <- read_tsv(peakTableFile)
+
+#annotate
+annotationResults <- mzSearch(peakTable, dbFileName,
+                              mzTol = 0.005, mzTolType = "abs",
+                              rt = TRUE, rtTol = 5, rtTolType = "abs")
+
+head(annotationResults)
+```
+
+
+## Literature
+
+[1] Stoffel et al. 2019

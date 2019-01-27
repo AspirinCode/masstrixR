@@ -1,7 +1,7 @@
 ---
 title: "Perform m/z matching with masstrixR"
-author: "Michael"
-date: "30 November 2018"
+author: "Dr. Michael Witting"
+date: "23 January 2019"
 output: html_document
 ---
 
@@ -9,22 +9,66 @@ output: html_document
 knitr::opts_chunk$set(echo = TRUE)
 ```
 
-## R Markdown
+## Introdcution
 
-This is an R Markdown document. Markdown is a simple formatting syntax for authoring HTML, PDF, and MS Word documents. For more details on using R Markdown see <http://rmarkdown.rstudio.com>.
+MassTRIX was build for the annotation of m/z values from high resolution mass spectrometry with putative metabolites. Different versions of MassTRIX have been published as online server [1-3]. The new version of MassTRIX is implemented as R package, called <code>masstrixR</code>. The main purpose is to provide annotation to m/z features and allow analysis of MS^2^ for metabolite identification.
 
-When you click the **Knit** button a document will be generated that includes both content as well as the output of any embedded R code chunks within the document. You can embed an R code chunk like this:
+This vignette describes the basic workflow for annotation of m/z values obtained from MS^1^. The input can be derived from direct infusion or chromatographic experiments. <code>masstrixR</code> uses SQLite database files to store metabolite databases and calculated adducts. The generation of such a database is explained in the vignette "Create SQLiteDBs for masstrixR". 
 
-```{r cars}
-summary(cars)
+## Loading a database
+
+For the following example we load an example database file installed with <code>masstrixR</code>. This database contains precalculated adducts ([M+H]+ and [M+Na]+) for a selection of metabolites. The database file is simply loaded via its file name and only opened on demand.
+
+```{r load DB}
+dbFileName <- system.file("extdata", "exampleData\\databases\\example_pos_MH_MNa.sqlite", package = 'masstrixR')
 ```
 
-## Including Plots
+## Reading m/z data
 
-You can also embed plots, for example:
+Data that shall be annotated has to be supplied as data frame with column headers. The column containing the m/z values is identified by its name. Currently supported header names are:
 
-```{r pressure, echo=FALSE}
-plot(pressure)
+* mz (<code>$mz</code>)
+* m.z (<code>$m.z</code>)
+* mzmed (<code>$mzmed</code>)
+
+In this example a .gda file from Genedata Expressionist for MS is loaded using the <code>readGdaFile</code> function, but any other data frame contain the m/z values will work. In future more distinct reader functions will be implemented, e.g. for Agilent .cef files etc. The function <code>readGdaFile</code> returns a list with the acutal intensity values, the annotation of the samples and the annotation of the features, which we require for m/z annotation. This data frame is the third in the list.
+
+```{r read .gda file, message=FALSE}
+# load masstrixR
+library(masstrixR)
+
+# read example .gda file
+gdaFile <- system.file("extdata", "exampleData\\Celegans_mz\\NaAcHILICPos_Cluster.gda", package = 'masstrixR')
+exampleGDA <- readGdaFile(gdaFile)
+
+# get row annotations with m/z values
+rowAnno <- exampleGDA[[3]]
+rowAnno$ClusterName <- row.names(rowAnno)
+head(rowAnno)
 ```
 
-Note that the `echo = FALSE` parameter was added to the code chunk to prevent printing of the R code that generated the plot.
+## Perform m/z annotation
+
+After all the data is available, the m/z annotation can be performed. This is done with the function <code>mzSearch</code>. It requires some arguments. First, the data frame for which the annotation shall be performed (in this case <code>rowAnno</code>), the path to the .sqlite file containing the database (<code>dbFileName</code>) and the tolerance for the mass search. The tolerance can be given either as absolute value (<code>"abs"</code>) in Da or as relative error (<code>"ppm"</code>) in ppm. The argument <code>mzTol</code> defines the maximum tolerance. The function <code>mzSearch</code> returns a data frame with all features that have been annotated. It contains all the original columns plus all columns from the database.
+
+```{r}
+#annotate
+annotationResults <- mzSearch(rowAnno, dbFileName, mzTol = 0.005, mzTolType = "abs")
+
+head(annotationResults)
+```
+
+If large database shall be used for annotation the database file can be first read into the memory for improved performance. This is done by adding the argument <code>mode</code>. The default value for this argument is <code>"onDisk"</code>. The value <code>"inMemory"</code> creates a copy of the database in memory, which is used for annotation.
+
+```{r}
+#annotate with DB in memory
+annotationResults <- mzSearch(rowAnno, dbFileName, mode = "inMemory", mzTol = 0.005, mzTolType = "abs")
+```
+
+The function <code>mzSearch</code> contains several other options for more advanced workflows, which include RT and CCS matching. They are explained in the respective vignettes.
+
+## Literature
+
+[1] Suhre & Schmitt-Kopplin
+[2] Wägele et al.
+[3] Witting & Schmitt-Kopplin
