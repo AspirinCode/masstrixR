@@ -3,15 +3,27 @@
 #' This function performs annotation of m/z values with putative metabolites using a previously created SQLite DB. Measured m/z values are compared against theoretical values within a defined error range. This error can be either absolute (in Da) or relative (in ppm).
 #' If the database contains RT or CCS values results can be a additionally filtered.
 #'
-#' @param peakList Data frame containing the peaks of interest, minimum column is called m.z ($m.z)
+#' @param peakList Data frame containing the peaks of interest, minimum column is called mz ($mz) or m.z ($m.z) or mzmed ($mzmed)
 #' @param dbFileName A .sqlite file containing the DB of interest
 #' @param mode Defines if the database shall be used from the disk ("onDisk") or in memory ("inMemory"). The second option enhances performances with very large peaks lists and DBs.
 #' @param mzTol Maximum allowed tolerance in Da or ppm
 #' @param mzTolType Defines the error type for m/z search, "abs" is used for absolute mass error, "ppm" for relative error
-#' @param rt Boolean value indicating of RT filtering shall be performed
-#' @return Returns the filename of the generated database
+#' @param rt Boolean value indicating of RT filtering shall be performed, if this option is true all entries in the DB need a RT value
+#' @param rtTol Maximum allowed tolerance for RT search in the unit of the DB and peaklist or in relative error
+#' @param rtTolType Defines the error type for RT search, "abs" is used for absolute RT error, "rel" for relative error
+#' @param ccs Boolean value indicating of CCS filtering shall be performed, if this option is true all entries in the DB need a CCS value
+#' @param ccsTol Maximum allowed tolerance for CCS search
+#' @param rtTolType Defines the error type for CCS search, "abs" is used for absolute CCS error, "rel" for relative error
+#'
+#' @return Returns a data frame with results of the annotation. If for one single m/z value multiple annotations are found, each annotation is represented as individual row.
+#'
 #' @examples
 #' mzSearch()
+#'
+#' @author Michael Witting, \email{michael.witting@@helmholtz-muenchen.de}
+#'
+#' @seealso \code{\link{mzLookUp}}
+#'
 #' @export
 mzSearch <- function(peakList, dbFileName, mode = "onDisk",
                      mzTol = 0.005, mzTolType = "abs",
@@ -62,9 +74,9 @@ mzSearch <- function(peakList, dbFileName, mode = "onDisk",
   # TODO check for NULL in columns!!!
   mydbColumns <- DBI::dbFetch(DBI::dbSendQuery(mydb, "PRAGMA table_info(adducts)"))
 
-  # check number of nulls in ccs column of DB
-  noOfNulls <- DBI::dbFetch(DBI::dbSendQuery(mydb, "SELECT SUM(CASE WHEN rt IS NULL THEN 1 ELSE 0 END) as rtNullCount FROM adducts;"))
-  noOfTotal <- DBI::dbFetch(DBI::dbSendQuery(mydb, "SELECT COUNT(metaboliteId) as rtCount FROM adducts;"))
+  # check number of nulls in rt column of DB
+  noOfNulls <- DBI::dbFetch(DBI::dbSendQuery(mydb, "SELECT SUM(CASE WHEN rt_db IS NULL THEN 1 ELSE 0 END) as rtNullCount FROM adducts;"))
+  noOfTotal <- DBI::dbFetch(DBI::dbSendQuery(mydb, "SELECT COUNT(metaboliteId_db) as rtCount FROM adducts;"))
 
   if(rt == TRUE & noOfNulls$rtNullCount / noOfTotal$rtCount == 1) {
 
@@ -75,8 +87,8 @@ mzSearch <- function(peakList, dbFileName, mode = "onDisk",
   }
 
   # check number of nulls in ccs column of DB
-  noOfNulls <- DBI::dbFetch(DBI::dbSendQuery(mydb, "SELECT SUM(CASE WHEN ccs IS NULL THEN 1 ELSE 0 END) as ccsNullCount FROM adducts;"))
-  noOfTotal <- DBI::dbFetch(DBI::dbSendQuery(mydb, "SELECT COUNT(metaboliteId) as ccsCount FROM adducts;"))
+  noOfNulls <- DBI::dbFetch(DBI::dbSendQuery(mydb, "SELECT SUM(CASE WHEN ccs_db IS NULL THEN 1 ELSE 0 END) as ccsNullCount FROM adducts;"))
+  noOfTotal <- DBI::dbFetch(DBI::dbSendQuery(mydb, "SELECT COUNT(metaboliteId_db) as ccsCount FROM adducts;"))
 
   if(ccs == TRUE & noOfNulls$ccsNullCount / noOfTotal$ccsCount == 1) {
 
@@ -145,7 +157,7 @@ mzSearch <- function(peakList, dbFileName, mode = "onDisk",
     }
 
     # generate query
-    query <- "SELECT * FROM adducts WHERE (adductMass BETWEEN :lowerMz AND :upperMz)"
+    query <- "SELECT * FROM adducts WHERE (adductMass_db BETWEEN :lowerMz AND :upperMz)"
     param <- list(
       lowerMz = lowerMz,
       upperMz = upperMz
@@ -153,7 +165,7 @@ mzSearch <- function(peakList, dbFileName, mode = "onDisk",
 
     # add part for RT search
     if (rt == TRUE) {
-      query <- paste0(query, "AND (rt BETWEEN :lowerRt AND :upperRt)")
+      query <- paste0(query, "AND (rt_db BETWEEN :lowerRt AND :upperRt)")
       param <- c(param, list(
         lowerRt = lowerRt,
         upperRt = upperRt
@@ -162,7 +174,7 @@ mzSearch <- function(peakList, dbFileName, mode = "onDisk",
 
     # add part for CCS search
     if (ccs == TRUE) {
-      query <- paste0(query, "AND (ccs BETWEEN :lowerCcs AND :upperCcs)")
+      query <- paste0(query, "AND (ccs_db BETWEEN :lowerCcs AND :upperCcs)")
       param <- c(param, list(
         lowerCcs = lowerCcs,
         upperCcs = upperCcs
@@ -192,47 +204,59 @@ mzSearch <- function(peakList, dbFileName, mode = "onDisk",
   if (c("mz") %in% colnames(peakList)) {
 
     # calculate absolute and relative m/z error
-    ms1annotation$mzAbsError <- ms1annotation$mz - ms1annotation$adductMass
-    ms1annotation$mzRelError <- (ms1annotation$mz - ms1annotation$adductMass) / ms1annotation$adductMass * 1000000
+    ms1annotation$mzAbsError <- ms1annotation$mz - ms1annotation$adductMass_db
+    ms1annotation$mzRelError <- (ms1annotation$mz - ms1annotation$adductMass_db) / ms1annotation$adductMass_db * 1000000
   } else if (c("m.z") %in% colnames(peakList)) {
 
     # calculate absolute and relative m/z error
-    ms1annotation$mzAbsError <- ms1annotation$m.z - ms1annotation$adductMass
-    ms1annotation$mzRelError <- (ms1annotation$m.z - ms1annotation$adductMass) / ms1annotation$adductMass * 1000000
+    ms1annotation$mzAbsError <- ms1annotation$m.z - ms1annotation$adductMass_db
+    ms1annotation$mzRelError <- (ms1annotation$m.z - ms1annotation$adductMass_db) / ms1annotation$adductMass_db * 1000000
   } else if (c("mzmed") %in% colnames(peakList)) {
 
     # calculate absolute and relative m/z error
-    ms1annotation$mzAbsError <- ms1annotation$mzmed - ms1annotation$adductMass
-    ms1annotation$mzRelError <- (ms1annotation$mzmed - ms1annotation$adductMass) / ms1annotation$adductMass * 1000000
+    ms1annotation$mzAbsError <- ms1annotation$mzmed - ms1annotation$adductMass_db
+    ms1annotation$mzRelError <- (ms1annotation$mzmed - ms1annotation$adductMass_db) / ms1annotation$adductMass_db * 1000000
   }
-
-
 
   # calculate RT error
   if (rt == TRUE) {
-    ms1annotation$rtAbsError <- ms1annotation$RT - ms1annotation$rt
-    ms1annotation$rtRelError <- (ms1annotation$RT - ms1annotation$rt) / ms1annotation$rt
+    ms1annotation$rtAbsError <- ms1annotation$RT - ms1annotation$rt_db
+    ms1annotation$rtRelError <- (ms1annotation$RT - ms1annotation$rt_db) / ms1annotation$rt_db
   }
 
   # calculate RT error
   if (ccs == TRUE) {
-    ms1annotation$ccsAbsError <- ms1annotation$CCS - ms1annotation$ccs
-    ms1annotation$ccsRelError <- (ms1annotation$CCS - ms1annotation$ccs) / ms1annotation$ccs
+    ms1annotation$ccsAbsError <- ms1annotation$CCS - ms1annotation$ccs_db
+    ms1annotation$ccsRelError <- (ms1annotation$CCS - ms1annotation$ccs_db) / ms1annotation$ccs_db
   }
 
   # return results
   return(ms1annotation)
 }
 
-#' This function annotates masses in a peak list with possible metabolites from a selected DB. Used adducts are the adducts covered by the respective database
+#' Performing m/z search (fast coding)
 #'
-#' @param peakList Data frame containing the peaks of interest, minimum column is called m.z ($m.z)
-#' @param dbFileName A .sqlite file containing the DB of interest
-#' @param mode Defines if the database shall be used from the disk ("onDisk") or in memory ("inMemory"). The second option enhances performances with very large peaks lists and DBs.
-#' @param mzTol Maximum allowed tolerance in Da (ppm will come soon)
-#' @return Returns the filename of the generated database
+#' This function performs annotation of m/z values with putative metabolites. In comparison to the \code{mzSearch} function no SQLite DB is required. A SQLite DB is created in memory during the annotation process and deleted afterwards. Instead of the path of the a .sqlite file a data frame containing a validated compound list is required. Measured m/z values are compared against theoretical values within a defined error range. This error can be either absolute (in Da) or relative (in ppm).
+#' If the database contains RT or CCS values results can be a additionally filtered.
+#'
+#' @param peakList Data frame containing the peaks of interest, minimum column is called mz ($mz) or m.z ($m.z) or mzmed ($mzmed)
+#' @param compoundList A data frame with a validated compound list see \code{\link{validateCompoundList}}
+#' @param mzTol Maximum allowed tolerance in Da or ppm
+#' @param mzTolType Defines the error type for m/z search, "abs" is used for absolute mass error, "ppm" for relative error
+#' @param rt Boolean value indicating of RT filtering shall be performed, if this option is true all entries in the DB need a RT value
+#' @param rtTol Maximum allowed tolerance for RT search in the unit of the DB and peaklist or in relative error (%). Please note: Unit of peakList and DB have to match, e.g. both in seconds, minutes or RI units
+#' @param rtTolType Defines the error type for RT search, "abs" is used for absolute RT error, "rel" for relative error
+#' @param ccs Boolean value indicating of CCS filtering shall be performed, if this option is true all entries in the DB need a CCS value
+#' @param ccsTol Maximum allowed tolerance for CCS search
+#' @param rtTolType Defines the error type for CCS search, "abs" is used for absolute CCS error, "rel" for relative error
+#'
+#' @return Returns a data frame with results of the annotation. If for one single m/z value multiple annotations are found, each annotation is represented as individual row.
 #' @examples
-#' mzLookup()
+#' mzLookUp()
+#'
+#' @author Michael Witting, \email{michael.witting@@helmholtz-muenchen.de}
+#'
+#' @seealso \code{\link{mzSearch}}
 #'
 #' @export
 mzLookUp <- function(peakList, compoundList, mzTol = 0.005, mzTolType = "abs",
@@ -269,6 +293,9 @@ mzLookUp <- function(peakList, compoundList, mzTol = 0.005, mzTolType = "abs",
 
   #  # generate data for upload based on input
   dbupload <- compoundList
+
+  # add prefix db to all column names
+  colnames(dbupload) <- paste(colnames(dbupload), "db", sep = "_")
 
   # upload to temp DB
   mydb <- DBI::dbConnect(RSQLite::SQLite(), ":memory:")
@@ -322,7 +349,7 @@ mzLookUp <- function(peakList, compoundList, mzTol = 0.005, mzTolType = "abs",
     }
 
     # generate query
-    query <- "SELECT * FROM adducts WHERE (adductMass BETWEEN :lowerMz AND :upperMz)"
+    query <- "SELECT * FROM adducts WHERE (adductMass_db BETWEEN :lowerMz AND :upperMz)"
     param <- list(
       lowerMz = lowerMz,
       upperMz = upperMz
@@ -330,7 +357,7 @@ mzLookUp <- function(peakList, compoundList, mzTol = 0.005, mzTolType = "abs",
 
     # add part for RT search
     if (rt == TRUE) {
-      query <- paste0(query, "AND (rt BETWEEN :lowerRt AND :upperRt)")
+      query <- paste0(query, "AND (rt_db BETWEEN :lowerRt AND :upperRt)")
       param <- c(param, list(
         lowerRt = lowerRt,
         upperRt = upperRt
@@ -339,7 +366,7 @@ mzLookUp <- function(peakList, compoundList, mzTol = 0.005, mzTolType = "abs",
 
     # add part for CCS search
     if (ccs == TRUE) {
-      query <- paste0(query, "AND (ccs BETWEEN :lowerCcs AND :upperCcs)")
+      query <- paste0(query, "AND (ccs_db BETWEEN :lowerCcs AND :upperCcs)")
       param <- c(param, list(
         lowerCcs = lowerCcs,
         upperCcs = upperCcs
@@ -364,19 +391,19 @@ mzLookUp <- function(peakList, compoundList, mzTol = 0.005, mzTolType = "abs",
   DBI::dbDisconnect(mydb)
 
   # calculate absolute and relative m/z error
-  ms1annotation$mzAbsError <- ms1annotation$m.z - ms1annotation$adductMass
-  ms1annotation$mzRelError <- (ms1annotation$m.z - ms1annotation$adductMass) / ms1annotation$adductMass * 1000000
+  ms1annotation$mzAbsError <- ms1annotation$m.z - ms1annotation$adductMass_db
+  ms1annotation$mzRelError <- (ms1annotation$m.z - ms1annotation$adductMass_db) / ms1annotation$adductMass_db * 1000000
 
   # calculate RT error
   if (rt == TRUE) {
-    ms1annotation$rtAbsError <- ms1annotation$RT - ms1annotation$rt
-    ms1annotation$rtRelError <- (ms1annotation$RT - ms1annotation$rt) / ms1annotation$rt
+    ms1annotation$rtAbsError <- ms1annotation$RT - ms1annotation$rt_db
+    ms1annotation$rtRelError <- (ms1annotation$RT - ms1annotation$rt_db) / ms1annotation$rt_db
   }
 
   # calculate RT error
   if (ccs == TRUE) {
-    ms1annotation$ccsAbsError <- ms1annotation$CCS - ms1annotation$ccs
-    ms1annotation$ccsRelError <- (ms1annotation$CCS - ms1annotation$ccs) / ms1annotation$ccs
+    ms1annotation$ccsAbsError <- ms1annotation$CCS - ms1annotation$ccs_db
+    ms1annotation$ccsRelError <- (ms1annotation$CCS - ms1annotation$ccs_db) / ms1annotation$ccs_db
   }
 
   # return results

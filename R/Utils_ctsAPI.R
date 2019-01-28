@@ -1,18 +1,3 @@
-#' Function to access the CTS from the FiehnLab
-#'
-#'
-.cts <- function() {
-
-}
-
-
-<<<<<<< HEAD
-
-getExternalDbIds <- function(inchikey, db) {
-  from <- "inchikey"
-  to <- db
-  queryString <- inchikey
-=======
 #' This function uses the CTS Webservice from the Fiehnlab to convert IDs
 #'
 #' @param from format of original identifier (kegg, hmdb, inchikey)
@@ -31,7 +16,6 @@ getExternalDbIds <- function(from, to, queryString) {
   if(!any(to %in% c("InChIKey", "Chemical Name", "KEGG" ,"Human Metabolome Database", "ChEBI", "BioCyc"))) {
     stop("to not correct, use InChIKey, Chemical Name, KEGG ,Human Metabolome Database, ChEBI or BioCyc")
   }
->>>>>>> masstrixR_RaMoNA_merge
 
   # construct url for GET request
   baseUrl <- "http://cts.fiehnlab.ucdavis.edu/service/convert"

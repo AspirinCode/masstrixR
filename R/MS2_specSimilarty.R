@@ -1,48 +1,4 @@
-#' Calculate similarity of isotope pattern
-#'
-#' based on S-ratio from MS-Dial
-#'
-#' @export
-isoPatternSimilarity <- function(x, y, mzTol = 0.005, ...) {
 
-  # align spectra and sort according to mass
-  alignedSpectra <- alignSpectra(x, y, mzTol = mzTol)
-  alignedSpectra <- alignedSpectra[order(alignedSpectra$mz),]
-
-  print(alignedSpectra)
-
-  # prepare sum
-  sum <- 0
-
-  # iterate through all peaks and compare neighbors
-  for(i in 1:(nrow(alignedSpectra) - 1)) {
-
-    # calculate ratios for neighboring isotopes
-    rLib <- alignedSpectra$intensity.bottom[i + 1] / alignedSpectra$intensity.bottom[i]
-    rAct <- alignedSpectra$intensity.top[i + 1] / alignedSpectra$intensity.top[i]
-
-    print(rLib)
-    print(rAct)
-
-    # remove infinite values
-    if(rLib == Inf) {
-      rLib <- 0
-    }
-
-    if(rAct == Inf) {
-      rAct <- 0
-    }
-
-    # make sum of absolute differences
-    sum <- sum + abs(rAct - rLib)
-
-  }
-
-  # calculate sRatio
-  sRatio <- 1 - sum
-
-  return(sRatio)
-}
 
 #' Calculate forward Dotproduct
 #'

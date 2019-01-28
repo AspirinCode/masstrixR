@@ -25,6 +25,9 @@ createDb <- function(compoundList, dbName) {
   # generate data for upload based on input
   dbupload <- compoundList
 
+  # add prefix db to all column names
+  colnames(dbupload) <- paste(colnames(dbupload), "db", sep = "_")
+
   ##############################################################################
   # Generate SQLite DB
   ##############################################################################
@@ -114,16 +117,10 @@ validateCompoundList <-
       stop("CCS option selected, but column ccs does not contain data")
     }
 
-    # if(ccs == TRUE & !ccsType %in% c("DT", "TWIMS", "TIMS", "predicted")) {
-    #   stop("Unknown CCS Type")
-    # }
-
-
     # check if external id columns exist
     if (!all(c("kegg", "hmdb", "chebi") %in% colnames(compoundList))) {
       stop("missing kegg, hmdb and chebi column")
     }
-
 
     # return true
     validationCheck <- TRUE
@@ -201,10 +198,6 @@ prepareCompoundList <-
       stop("ccs option requires individual adduct annotation")
     }
 
-    # if(ccs == TRUE & !ccsType %in% c("DT", "TWIMS", "TIMS", "predicted")) {
-    #   stop("Unknown CCS Type")
-    # }
-
     ############################################################################
     # create required variables
     ############################################################################
@@ -250,8 +243,6 @@ prepareCompoundList <-
       compoundList$hmdb <- NA
       compoundList$chebi <- NA
 
-      # stop parallel cluster
-      parallel::stopCluster(cl)
     } else {
       # check the different columns if they exist
       # KEGG
@@ -271,10 +262,11 @@ prepareCompoundList <-
     }
 
     ############################################################################
-    # check if external ids are present or fetch them from CTS
+    # calculate adduct masses and genereate list for upload
     ############################################################################
     # create adduct
     if (c("adducts") %in% colnames(compoundList)) {
+
       print("individual adducts")
 
       # iterate over compound list and add to dbupload
@@ -283,6 +275,11 @@ prepareCompoundList <-
           adductList <- stringr::str_split(compoundList$adducts[i], ",")[[1]]
         } else {
           adductList <- compoundList$adducts[i]
+        }
+
+        #check exact mass
+        if(is.na(compoundList$exactmass[i])) {
+          compoundList$exactmass[i] <- calculateExactMass(compoundList$formula[i])
         }
 
         # iterate over adducts and create a query list
@@ -318,6 +315,13 @@ prepareCompoundList <-
       }
 
       print("commmon adducts")
+
+      for (i in 1:nrow(compoundList)) {
+        #check exact mass
+        if(is.na(compoundList$exactmass[i])) {
+          compoundList$exactmass[i] <- calculateExactMass(compoundList$formula[i])
+        }
+      }
 
       # iterate over adducts and create a query list
       for (adduct in adductList) {

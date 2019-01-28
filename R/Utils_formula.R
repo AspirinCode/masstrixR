@@ -9,16 +9,12 @@ calcAdductFormula <- function(molecularFormula, adduct) {
   # get adduct calculation list
   adductCalc <- getAdductCalc()
 
-  # print(paste0(molecularFormula, "_", adduct))
-
-
   # molecule formula parsed
   if (as.numeric(adductCalc[[adduct]][1]) > 1) {
     molFormulaList <- parseChemFormula(molecularFormula) * as.numeric(adductCalc[[adduct]][1]) # multiplied with factor from adduct calculation
   } else {
     molFormulaList <- parseChemFormula(molecularFormula)
   }
-
 
   # get additive and subtractive part for formula
   addFormulaList <- parseChemFormula(adductCalc[[adduct]][3])
@@ -170,3 +166,75 @@ standardizeChemFormula <- function(chemFormula) {
   return(stdChemFormula)
 }
 
+#' calculate mass
+#'
+calculateExactMass <- function(chemFormula) {
+
+  #parse chemical formula
+  parsedChemFormula <- parseChemFormula(chemFormula)
+
+  #check if all elements are present in element mass list
+  elementMassList <- getElementMassList()
+
+  if(!all(names(parsedChemFormula) %in% names(elementMassList))) {
+    print("stop")
+  }
+
+  # exact mass calculation
+  exactMass <- 0
+
+  for(i in 1:length(parsedChemFormula)) {
+
+    # get element name
+    element <- names(parsedChemFormula[i])
+
+    # sum up individual elements
+    exactMass <- exactMass + parsedChemFormula[[i]] * as.numeric(elementMassList[element])
+  }
+
+  # return exact mass
+  return(exactMass)
+}
+
+getElementMass <- function(element) {
+
+}
+
+getElementMassList <- function() {
+
+  # make list with element masses
+  elementMassList <- list(
+    # CHONSP
+    "C" = 12.00000,
+    "H" = 1.007825,
+    "O" = 15.994915,
+    "N" = 14.003074,
+    "S" = 31.972071,
+    "P" = 30.973762,
+
+    # halogens
+    "Cl" = 34.968853,
+    "Br" = 78.918338,
+    "F" = 18.998403,
+    "I" = 126.904472,
+
+    # metals
+    "Li" = 6.015123,
+    "Na" = 22.989769,
+    "K" = 38.963706,
+    "Mg" = 23.985042,
+    "Ca" = 39.962591,
+    "Mn" = 54.938044,
+    "Fe" = 53.939609,
+    "Co" = 58.933194,
+    "Ni" = 57.935342,
+    "Cu" = 62.929598,
+    "Zn" = 63.929142,
+    "Al" = 26.981539,
+    "Si" = 27.976927
+  )
+
+  #return list
+  return(elementMassList)
+
+}
