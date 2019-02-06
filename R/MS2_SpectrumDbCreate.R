@@ -1,3 +1,7 @@
+#'
+#'
+#'
+#' @export
 createMs2Db <- function(librarySpectra, ms2dbFileName) {
 
   ##############################################################################

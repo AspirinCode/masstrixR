@@ -2,7 +2,14 @@
 #' Inspeired from MassBank parser from RMassBank
 #' https://github.com/sneumann/RMassBank/blob/master/R/parseMassBank.R
 #'
+#' @param pathToMBFile File path to a single MassBank Record
 #'
+#' @examples
+#' readMassBankFile()
+#'
+#' @author Michael Witting, \email{michael.witting@@helmholtz-muenchen.de}
+#'
+#' @export
 readMassBankFile <- function(pathToMBFile) {
 
   require(MSnbase)
@@ -91,4 +98,38 @@ readMassBankFile <- function(pathToMBFile) {
   mcols(mbRecord)$numPeak <- numPeak
 
   return(mbRecord)
+}
+
+#' Function to read a single MassBank record
+#' Inspeired from MassBank parser from RMassBank
+#' https://github.com/sneumann/RMassBank/blob/master/R/parseMassBank.R
+#'
+#' @param pathToFolder File path to a single MassBank Record
+#'
+#' @examples
+#' readMassBankFolder()
+#'
+#' @author Michael Witting, \email{michael.witting@@helmholtz-muenchen.de}
+#' @export
+readMassBankFolder <- function(pathToFolder) {
+
+  require(MSnbase)
+
+  #read files in folder
+  massBankFiles <- list.files(pathToFolder, pattern = ".txt$", full.names = TRUE)
+
+  #make empty spectra
+  librarySpectra <- new("Spectra")
+
+  #iterate through files
+  for(massBankFile in massBankFiles) {
+    spectrum <- readMassBankFile(massBankFile)
+
+    # append to spectra list
+    librarySpectra <- append(librarySpectra, spectrum)
+  }
+
+  # return list with MassBank Spectra
+  return(librarySpectra)
+
 }

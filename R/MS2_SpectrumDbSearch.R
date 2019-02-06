@@ -1,3 +1,5 @@
+#' TODO add documentation
+#' @export
 searchByPrecursor <- function(precursorMz, ms2dbFileName, mzTol = 0.005, mzTolType = "abs", precursorType = NA) {
 
   # some sanity checks
@@ -127,4 +129,12 @@ searchByPrecursor <- function(precursorMz, ms2dbFileName, mzTol = 0.005, mzTolTy
 
   # return search results as Spectra object
   return(librarySearchResults)
+}
+
+#' TODO make function wrapper to compare results
+#'
+createResultsSet <- function(querySpectrum, queryResults) {
+
+
+
 }
