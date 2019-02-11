@@ -1,5 +1,6 @@
 #'
 #'
+#' @import MSnbase
 #' @export
 containsProductIon <- function(ms2spectrum, productIonMz, mzTol = 0.005, mzTolType = "abs") {
 
@@ -28,7 +29,7 @@ containsProductIon <- function(ms2spectrum, productIonMz, mzTol = 0.005, mzTolTy
 }
 
 #'
-#'
+#' @import MSnbase
 #' @export
 containsNeutralLossIon <- function(ms2spectrum, neutralLossMass, mzTol = 0.005, mzTolType = "abs") {
 
@@ -60,7 +61,7 @@ containsNeutralLossIon <- function(ms2spectrum, neutralLossMass, mzTol = 0.005, 
 }
 
 #'
-#'
+#' @import MSnbase
 #' @export
 containsFragmentDifference <- function(ms2spectrum, fragmentMassDifference, mzTol = 0.005, mzTolType = "abs") {
 

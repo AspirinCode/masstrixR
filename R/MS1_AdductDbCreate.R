@@ -94,9 +94,6 @@ validateCompoundList <-
       )
     }
 
-    # check correct format of each column
-    # TODO
-
     # is there an RT column, if RT is true
     if (rt == TRUE & !c("rt") %in% colnames(compoundList)) {
       stop("selected rt option but no rt column defined in compound list")

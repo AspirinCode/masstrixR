@@ -62,8 +62,23 @@ matchMz <- function(posMz, negMz, posAdducts, negAdducts, mzTol = 0.005, mzTolTy
     stop("unknown mzTolType")
   }
 
-  # return resulting DF
-  return(filteredDf)
+  if(!is.null(filteredDf) & nrow(filteredDf) > 0) {
+    matchingResult <- ""
+
+    for(i in 1:nrow(filteredDf)) {
+
+      if(i == 1) {
+        matchingResult <- paste0(filteredDf$posAdduct[i], "<->", filteredDf$negAdduct[i])
+      } else {
+        matchingResult <- paste0(matchingResult, " / ", filteredDf$posAdduct[i], "<->", filteredDf$negAdduct[i])
+      }
+    }
+
+    # return resulting DF
+    return(matchingResult)
+  } else {
+    return(NA)
+  }
 }
 
 #' Checking for mass diferences

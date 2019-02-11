@@ -1,4 +1,11 @@
-#' TODO add documentation
+#' Function to find MS2 spectra in a MS2 library for spectral matching. The search parameters are a given precursor m/z and potentially its type of adduct.
+#' @param precursorMz Mass of precursor for search
+#' @param ms2dbFileName File name or path to MS2 database
+#' @param mzTol Maximum allowed tolerance in Da or ppm
+#' @param mzTolType Defines the error type for m/z search, "abs" is used for absolute mass error, "ppm" for relative error
+#' @param precursorType String indicating the potential precursor adducts
+#'
+#' @importClassesFrom MSnbase Spectrum2 Spectra
 #' @export
 searchByPrecursor <- function(precursorMz, ms2dbFileName, mzTol = 0.005, mzTolType = "abs", precursorType = NA) {
 
@@ -41,10 +48,6 @@ searchByPrecursor <- function(precursorMz, ms2dbFileName, mzTol = 0.005, mzTolTy
     ))
   }
 
-  print(query)
-
-  print(param)
-
   # execute query
   resultSet <- DBI::dbSendQuery(mydb, query)
   DBI::dbBind(resultSet, param = param)
@@ -57,8 +60,6 @@ searchByPrecursor <- function(precursorMz, ms2dbFileName, mzTol = 0.005, mzTolTy
 
   # iterate through all ids and get data
   for(id in ids$intID) {
-
-    print(id)
 
     # get spectrum metadata
     metadataRs <- DBI::dbSendQuery(mydb, "SELECT * FROM metadata WHERE intID = :x")
@@ -98,8 +99,6 @@ searchByPrecursor <- function(precursorMz, ms2dbFileName, mzTol = 0.005, mzTolTy
     # make new Spectra object
     librarySearchSpectrum <- Spectra(ms2spec)
 
-    print(metaData$id)
-
     # add annotations
     # from metaData table
     mcols(librarySearchSpectrum)$id <- metaData$id
@@ -131,10 +130,65 @@ searchByPrecursor <- function(precursorMz, ms2dbFileName, mzTol = 0.005, mzTolTy
   return(librarySearchResults)
 }
 
-#' TODO make function wrapper to compare results
+#' Function that calculates scores for a query and a list of result spectra
+#' @param querySpectrum A Spectrum2 object
+#' @param queryResults A Spectra object containing the results from a DB search
 #'
-createResultsSet <- function(querySpectrum, queryResults) {
+#' @export
+createResultsSet <- function(querySpectrum, queryResults, align = TRUE, mzTol = 0.005, treshold = 1,
+                             plotIt = TRUE, storePlot = FALSE, prefix = "", dataPath = "", title = NA) {
 
+  # create empty data for results
+  resultSet <- data.frame()
 
+  # loop over queryResults
+  for(i in seq_along(queryResults)) {
+    # perform spectral matching
+    # forward matching
+    forwardScore <- forwardDotProduct(querySpectrum, queryResults[[i]],
+                                     align = align, mzTol = mzTol, treshold = treshold)
 
+    # reverse matching
+    reverseScore <- reverseDotProduct(querySpectrum, queryResults[[i]],
+                                     align = align, mzTol = mzTol, treshold = treshold)
+
+    # number of common peaks
+    matchingPeaks <- commonPeaks(querySpectrum, queryResults[[i]],
+                                 align = align, mzTol = mzTol, treshold = treshold)
+
+    if(is.na(title)) {
+      title <- paste0(prefix, " / ",
+                      queryResults[i]@elementMetadata$name,
+                      ", forward: ",
+                      round(forwardScore * 1000, 0),
+                      "/ reverse: ",
+                      round(forwardScore * 1000, 0))
+    }
+
+    # make mirror plot
+    p1 <- makeMirrorPlot(querySpectrum, queryResults[[i]],
+                         align = align, mzTol = mzTol, treshold = treshold, title = title)
+
+    # show plot if TRUE
+    if(plotIt) {
+      plot(p1)
+    }
+
+    # store plot if TRUE
+    if(storePlot) {
+      plotPath <- paste0(dataPath, "\\", prefix, ".png")
+      dev.copy(png, plotName, width = 1000, height = 500)
+      dev.off()
+    }
+
+    # add to result set
+    resultSet <- rbind.data.frame(resultSet, cbind.data.frame(prefix = prefix,
+                                                              name = queryResults[i]@elementMetadata$name,
+                                                              forwardScore = forwardScore,
+                                                              reverseScore = reverseScore,
+                                                              matchingPeaks = matchingPeaks))
+  }
+
+  # return result set
+  return(resultSet)
 }

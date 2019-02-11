@@ -10,14 +10,13 @@
 #' @return Returns a MSnbase Spectrum 1 object containing the calculated isotope pattern
 #' @examples
 #' predictIsoPattern("C6H12O6Na", charge = 1)
-#' @export
+#' @importClassesFrom  MSnbase Spectrum1
 predictIsoPattern <-
   function(ionFormula,
              charge,
              plotit = FALSE,
              treshold = 0.01,
              resolution = 50000) {
-    require(MSnbase)
 
     # pre-check generated ion formula
     checked <- enviPat::check_chemform(isotopes, ionFormula)

@@ -1,5 +1,3 @@
-
-
 #' Calculate forward Dotproduct
 #'
 #'
@@ -71,7 +69,7 @@ reverseDotProduct <- function(x, y, align = FALSE, mzTol = 0.005, treshold = 0.0
 }
 
 
-#' Calculate reverse Dotproduct
+#' Calculate common peaks
 #'
 #'
 #' @export
@@ -106,7 +104,7 @@ commonPeaks <- function(x, y, align = FALSE, mzTol = 0.005, treshold = 0.01, ...
 #'
 #' Inspired by GNPS
 #'
-#' @export
+#'
 massShiftForwadDotProduct <- function() {
 
 }
@@ -115,7 +113,7 @@ massShiftForwadDotProduct <- function() {
 #'
 #' Inspired b Weizmass
 #'
-#' @export
+#'
 xRank <- function() {
 
 }

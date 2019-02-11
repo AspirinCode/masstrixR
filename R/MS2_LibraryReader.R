@@ -9,10 +9,9 @@
 #'
 #' @author Michael Witting, \email{michael.witting@@helmholtz-muenchen.de}
 #'
+#' @importClassesFrom MSnbase Spectrum2 Spectra
 #' @export
 readMassBankFile <- function(pathToMBFile) {
-
-  require(MSnbase)
 
   #read file
   fileConnection <- file(pathToMBFile)
@@ -110,10 +109,9 @@ readMassBankFile <- function(pathToMBFile) {
 #' readMassBankFolder()
 #'
 #' @author Michael Witting, \email{michael.witting@@helmholtz-muenchen.de}
+#' @importClassesFrom MSnbase Spectra
 #' @export
 readMassBankFolder <- function(pathToFolder) {
-
-  require(MSnbase)
 
   #read files in folder
   massBankFiles <- list.files(pathToFolder, pattern = ".txt$", full.names = TRUE)
