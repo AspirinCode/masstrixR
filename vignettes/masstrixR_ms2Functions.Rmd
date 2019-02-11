@@ -1,0 +1,83 @@
+---
+title: "Use of MS2 functions"
+author: "Michael"
+date: "7 Februar 2019"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+## Introduction
+
+Analysis of MS^2^ data can involve several steps beyond matching with a database. Different approaches can be used to analyze tandem MS spectra. One of the most common is to search for known neutral losses from the precursor masses, specific fragment m/z or mass differences between fragments. <code>masstrixR</code> offers functions to execute all of this steps. The example data contains spectra of ceramides from Hänel et al. (2019, under review) detected in C. elegans. These ceramides contain a unusual C17iso sphingoid base.
+
+First we read the spectra from the .mgf file using functions from the <code>MSnbase</code> package. <code>masstrixR</code> uses <code>Spectrum2</code> for working with MS^2^ spectra. Individual spectra are best stored in a <code>Spectra</code> object which allows to add arbitary annotations using the <code>mcols()</code> function.
+
+```{r read ms2 spectra}
+# load required library
+library(masstrixR)
+library(MSnbase)
+
+# get example file from package
+mgfFile <- system.file("extdata", "exampleData\\Celegans_lipids_ms2\\ceramides.mgf", package = 'masstrixR')
+
+# read mgf file with MS2 spectra and isolate all MS2 spectra a list
+ms2data <- readMgfData(mgfFile)
+ms2spectra <- Spectra(spectra(filterMsLevel(ms2data, msLevel = 2)))
+
+# working with logical statements for fragments
+mcols(ms2spectra)$waterLoss <- unlist(lapply(ms2spectra, containsNeutralLossIon, neutralLossMass = 18.010565))
+mcols(ms2spectra)$c17sphingoid <- unlist(lapply(ms2spectra, containsProductIon, productIonMz = 250.2529))
+mcols(ms2spectra)$c27ohFa <- unlist(lapply(ms2spectra, containsFragmentDifference, fragmentMassDifference = 392.401816))
+
+# check the invidual columns
+mcols(ms2spectra)$c17sphingoid
+mcols(ms2spectra)$c27ohFa
+
+# make combined searches
+selectedSpectrum <- ms2spectra[which(mcols(ms2spectra)$waterLoss & 
+                   mcols(ms2spectra)$c17sphingoid &
+                   mcols(ms2spectra)$c27ohFa)]
+
+# plot
+plotSpectrum(selectedSpectrum[[1]], plotIt = TRUE, highlight = TRUE, highlightMz = c(250.2529, 268.2635, 238.2530))
+```
+
+```{r}
+# get example file from package
+ms2db <- system.file("extdata", "exampleData\\Celegans_lipids_ms2\\wormLipidDb_MS2.sqlite", package = 'masstrixR')
+
+# adducts to search for
+adducts <- c("[M+H]+", "[M+Na]+")
+
+# empty data frame for results
+result <- data.frame()
+
+for(i in seq_along(ms2spectra)) {
+  
+    # create empty Spectra object for results
+  searchResult <- new("Spectra")
+  
+  # perform precursor search
+  # iterate over adducts
+  for(adduct in adducts) {
+    searchResultClipboard <-
+      masstrixR::searchByPrecursor(
+        precursorMz(ms2spectra[[i]]),
+        ms2db,
+        precursorType = adduct,
+        mzTol = 0.005
+      )
+    
+    # if 1 or more results were found, add to searchResult
+    if(length(searchResultClipboard) > 0) {
+      searchResult <- append(searchResult, searchResultClipboard)
+    }
+  }
+  
+  result <- rbind.data.frame(result, createResultsSet(ms2spectra[[i]], searchResult, prefix = "test", storePlot = FALSE))
+}
+```
+

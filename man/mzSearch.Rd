@@ -42,9 +42,6 @@ If the database contains RT or CCS values results can be a additionally filtered
 mzSearch()
 
 }
-\seealso{
-\code{\link{mzLookUp}}
-}
 \author{
 Michael Witting, \email{michael.witting@helmholtz-muenchen.de}
 }

@@ -166,13 +166,9 @@ createResultsSet <- function(querySpectrum, queryResults, align = TRUE, mzTol = 
     }
 
     # make mirror plot
-    p1 <- makeMirrorPlot(querySpectrum, queryResults[[i]],
-                         align = align, mzTol = mzTol, treshold = treshold, title = title)
+    makeMirrorPlot(querySpectrum, queryResults[[i]],
+                         align = align, mzTol = mzTol, treshold = treshold, title = title, plotIt = plotIt)
 
-    # show plot if TRUE
-    if(plotIt) {
-      plot(p1)
-    }
 
     # store plot if TRUE
     if(storePlot) {

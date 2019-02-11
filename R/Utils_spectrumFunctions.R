@@ -1,6 +1,6 @@
 #' Function to bin a single spectrum (based on MSnbase)
 #'
-#' @export
+#'
 bin_Spectrum <- function(object, binSize = 1L,
                          breaks = seq(floor(min(mz(object))),
                                       ceiling(max(mz(object))),
@@ -25,7 +25,7 @@ bin_Spectrum <- function(object, binSize = 1L,
 
 #' Function to bin spectra on common bins
 #'
-#' @export
+#'
 bin_Spectra <- function(object1, object2, binSize = 1L,
                         breaks = seq(floor(min(c(mz(object1), mz(object2)))),
                                      ceiling(max(c(mz(object1), mz(object2)))),
@@ -94,7 +94,6 @@ alignSpectra <- function(x, y, mzTol = 0.005, mzTolType = "abs", treshold = 0.01
 
     } else if(mzTolType == "ppm") {
 
-      # TODO implement for ppm
       top[,1][bottom[,1][i] >= top[,1] - (mzTol / 1e6 * bottom[,1][i]) & bottom[,1][i] <= top[,1] + (mzTol / 1e6 * bottom[,1][i])] <- bottom[,1][i]
 
     }

@@ -2,10 +2,10 @@
 % Please edit documentation in R/MS2_specSimilarty.R
 \name{commonPeaks}
 \alias{commonPeaks}
-\title{Calculate reverse Dotproduct}
+\title{Calculate common peaks}
 \usage{
 commonPeaks(x, y, align = FALSE, mzTol = 0.005, treshold = 0.01, ...)
 }
 \description{
-Calculate reverse Dotproduct
+Calculate common peaks
 }

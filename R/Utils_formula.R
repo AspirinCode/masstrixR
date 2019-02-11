@@ -155,7 +155,7 @@ generateChemFormula <- function(parsedChemFormula) {
 
 #' standardize formula
 #'
-#'
+#' @export
 standardizeChemFormula <- function(chemFormula) {
 
   # parse and reconstruct

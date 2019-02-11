@@ -1,0 +1,87 @@
+---
+title: "Matching MS2 data"
+author: "Michael"
+date: "31 Januar 2019"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+## Introduction
+
+blablabla
+
+```{r make example db}
+# load required library
+library(masstrixR)
+
+# get example file from package
+pathToMbRecords <- system.file("extdata", "exampleData\\Celegans_ms2\\MassBankRecords", package = 'masstrixR')
+
+# read all records in folder
+mbRecords <- readMassBankFolder(pathToMbRecords)
+
+# create MS2 SQLite DB with masstrixR
+ms2db <- createMs2Db(mbRecords, "example_MS2")
+```
+
+## Including Plots
+
+```{r mgf}
+# load required library
+library(MSnbase)
+
+# get example file from package
+mgfFile <- system.file("extdata", "exampleData\\Celegans_ms2\\exampleMs2.mgf", package = 'masstrixR')
+
+# read mgf file with MS2 spectra and isolate all MS2 spectra a list
+ms2data <- readMgfData(mgfFile)
+ms2spectra <- spectra(filterMsLevel(ms2data, msLevel = 2))
+  
+# adducts to search for
+adducts <- c("[M+H]+", "[M+Na]+")
+
+for(i in 1:length(ms2spectra)) {
+  
+  # create empty Spectra object for results
+  searchResult <- new("Spectra")
+  
+  # perform precursor search
+  # iterate over adducts
+  for(adduct in adducts) {
+    searchResultClipboard <-
+      masstrixR::searchByPrecursor(
+        precursorMz(ms2spectra[[i]]),
+        ms2db,
+        precursorType = adduct,
+        mzTol = 0.005
+      )
+    
+    # if 1 or more results were found, add to searchResult
+    if(length(searchResultClipboard) > 0) {
+      searchResult <- append(searchResult, searchResultClipboard)
+    }
+  }
+  
+  if(length(searchResult) > 0) {
+      for(j in 1:length(searchResult)) {
+        
+        forward <- forwardDotProduct(ms2spectra[[i]], searchResult[[j]], align = TRUE, mzTol = 0.005)
+        reserve <- reverseDotProduct(ms2spectra[[i]], searchResult[[j]], align = TRUE, mzTol = 0.005)
+        
+        title <- paste0("forward: ", round(forward * 1000, 0), "/ reverse: ", round(reserve * 1000, 0))
+        
+        #plot(ms2spectra[[i]], searchResult[[j]])
+        p1 <- makeMirrorPlot(ms2spectra[[i]], searchResult[[j]], align = TRUE, mzTol = 0.005, title = title)
+        if(!is.null(p1)) {
+          plot(p1)
+        }
+      }
+  }
+}
+
+
+plotSpectrum(ms2spectra[[3]], highlight = TRUE, highlightMz = c(69.0667))
+```

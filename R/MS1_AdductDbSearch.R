@@ -22,7 +22,6 @@
 #'
 #' @author Michael Witting, \email{michael.witting@@helmholtz-muenchen.de}
 #'
-#' @seealso \code{\link{mzLookUp}}
 #'
 #' @export
 mzSearch <- function(peakList, dbFileName, mode = "onDisk",

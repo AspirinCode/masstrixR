@@ -8,8 +8,18 @@ https://github.com/sneumann/RMassBank/blob/master/R/parseMassBank.R}
 \usage{
 readMassBankFile(pathToMBFile)
 }
+\arguments{
+\item{pathToMBFile}{File path to a single MassBank Record}
+}
 \description{
 Function to read a single MassBank record
 Inspeired from MassBank parser from RMassBank
 https://github.com/sneumann/RMassBank/blob/master/R/parseMassBank.R
+}
+\examples{
+readMassBankFile()
+
+}
+\author{
+Michael Witting, \email{michael.witting@helmholtz-muenchen.de}
 }
