@@ -5,7 +5,7 @@
 #' @param mzTolType Defines the error type for m/z search, "abs" is used for absolute mass error, "ppm" for relative error
 #' @param precursorType String indicating the potential precursor adducts
 #'
-#' @importClassesFrom MSnbase Spectrum2 Spectra
+#' @import MSnbase
 #' @export
 searchByPrecursor <- function(precursorMz, ms2dbFileName, mzTol = 0.005, mzTolType = "abs", precursorType = NA) {
 
@@ -156,6 +156,9 @@ createResultsSet <- function(querySpectrum, queryResults, align = TRUE, mzTol = 
     matchingPeaks <- commonPeaks(querySpectrum, queryResults[[i]],
                                  align = align, mzTol = mzTol, treshold = treshold)
 
+    noPeaks_querySpectrum <- length(mz(querySpectrum))
+    noPeaks_queryResult <- length(mz(queryResults[[i]]))
+
     if(is.na(title)) {
       title <- paste0(prefix, " / ",
                       queryResults[i]@elementMetadata$name,
@@ -182,7 +185,9 @@ createResultsSet <- function(querySpectrum, queryResults, align = TRUE, mzTol = 
                                                               name = queryResults[i]@elementMetadata$name,
                                                               forwardScore = forwardScore,
                                                               reverseScore = reverseScore,
-                                                              matchingPeaks = matchingPeaks))
+                                                              matchingPeaks = matchingPeaks,
+                                                              noPeaks_query = noPeaks_querySpectrum,
+                                                              noPeaks_library = noPeaks_queryResult))
   }
 
   # return result set
