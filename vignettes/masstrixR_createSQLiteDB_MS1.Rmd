@@ -142,3 +142,35 @@ print(dbFileName)
 ```
 
 Congratulations! You after running the code of this vignette you generate your first .sqlite database file that can be used with <code>masstrixR</code>. You can proceed with the vignette on m/z matching, which explains how a .sqlite file can be used with <code>masstrixR</code> to annotate MS^1^. data.
+
+# Creating database files with isotopically labeled substances
+
+If working with isotopically labeled substances, e.g. in isotope tracer or labeling experiments, masses show characteristics shifts. <code>masstrixR</code> offers the possibility to calculate masses (not abundance) of isotopically labeled substances by using the chemical formula as basis. An input compound list is used and modified to contain the isotopically labeled exact masses. This list can be further processed like a normal compound list.
+
+```{r}
+# get all supported elements for labeling
+getIsotopeNameList()
+
+# create fully labeled metabolite masses
+isoCompoundList_full <- prepareIsoCompoundList(compoundList, isoLabel = "full", labeledElement = "C")
+
+# create partially labeled metabolite masses with 1 to 3 labeled carbons
+isoCompoundList_partial <- prepareIsoCompoundList(compoundList, isoLabel = "partial", labeledElement = "C", noOfLabel = c(0, 1, 2, 3))
+
+# get examples
+isoCompoundList_partial[which(isoCompoundList_partial$id == "YMDB00002"),]
+
+# adducts used for DB generation
+adducts <- c("[M+H]+", "[M+Na]+")
+
+# create compound list for DB creation
+newisoCompoundList_partial <- prepareCompoundList(isoCompoundList_partial, adductList = adducts)
+
+# check if compound list is valid and create SQLite DB
+if(validateCompoundList(newisoCompoundList_partial)) {
+  dbFileName <- createDb(newisoCompoundList_partial, "example_isoLabel_pos_MH_MNa")
+}
+print(dbFileName)
+
+```
+

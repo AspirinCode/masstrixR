@@ -1,19 +1,20 @@
 #' This function generates the formula of a pseudomolecular ion from a chemical formula and the type of adduct selected.
-#'
+#' @param chemFormula Single string with chemical formula
+#' @param adduct Adduct shorthand notation according to <code>masstrixR</code> notation.
 #' @return Returns a string with the ion formula
 #' @examples
-#' ionFormula <- calcAdductFormula("C6H12O6", "M+H")
+#' ionFormula <- calcAdductFormula("C6H12O6", "[M+H]+")
 #' @export
-calcAdductFormula <- function(molecularFormula, adduct) {
+calcAdductFormula <- function(chemFormula, adduct) {
 
   # get adduct calculation list
   adductCalc <- getAdductCalc()
 
   # molecule formula parsed
   if (as.numeric(adductCalc[[adduct]][1]) > 1) {
-    molFormulaList <- parseChemFormula(molecularFormula) * as.numeric(adductCalc[[adduct]][1]) # multiplied with factor from adduct calculation
+    molFormulaList <- parseChemFormula(chemFormula) * as.numeric(adductCalc[[adduct]][1]) # multiplied with factor from adduct calculation
   } else {
-    molFormulaList <- parseChemFormula(molecularFormula)
+    molFormulaList <- parseChemFormula(chemFormula)
   }
 
   # get additive and subtractive part for formula
@@ -58,7 +59,8 @@ calcAdductFormula <- function(molecularFormula, adduct) {
 }
 
 #' This function checks if one sum formula is contained in another.
-#'
+#' @param targetFormula Single string with chemical formula
+#' @param queryFormula Single string with chemical formula that should be contained in the targetFormula
 #' @return TRUE or FALSE
 #' @examples
 #' ionFormula <- containsFormula("C6H12O6", "H2O")
@@ -86,8 +88,9 @@ containsFormula <- function(targetFormula, queryFormula) {
   return(contains)
 }
 
+
 #' This function parses a chemical formula into a named vector
-#'
+#' @param chemFormula Single string with chemical formula
 #' @return Named vector with all elements
 #' @examples
 #' parseChemFormula("C6H12O6")
@@ -114,11 +117,15 @@ parseChemFormula <- function(chemFormula) {
   return(parsedChemFormula)
 }
 
+
 #' This function generates a chemical formula from a named vector of elemental counts
-#'
+#' @param parsedChemFormula Named list containing the elements as names and their abudance as values
 #' @return Single string with chemical formula
 #' @examples
-#' parseChemFormula("C6H12O6")
+#' formula <- list("C" = 6,
+#'                 "H" = 12,
+#'                 "O" = 6)
+#' generateChemFormula(formula)
 #' @export
 generateChemFormula <- function(parsedChemFormula) {
 
@@ -153,8 +160,12 @@ generateChemFormula <- function(parsedChemFormula) {
   return(chemFormulaRecon)
 }
 
-#' standardize formula
-#'
+
+#' This function standardizes a supplied chemical formula according to the Hill notation system.
+#' @param chemFormula Single string with chemical formula
+#' @return Single string with standardized chemical formua
+#' @examples
+#' standardizeChemFormula("O6C6H12")
 #' @export
 standardizeChemFormula <- function(chemFormula) {
 
@@ -166,8 +177,13 @@ standardizeChemFormula <- function(chemFormula) {
   return(stdChemFormula)
 }
 
-#' calculate mass
-#'
+
+#' This function calculates the exact mass from a given sum formula.
+#' @param chemFormula Single string with chemical formula
+#' @return calculated exact mass
+#' @examples
+#' calculateExactMass("C6H12O6")
+#' @export
 calculateExactMass <- function(chemFormula) {
 
   #parse chemical formula
@@ -177,12 +193,13 @@ calculateExactMass <- function(chemFormula) {
   elementMassList <- getElementMassList()
 
   if(!all(names(parsedChemFormula) %in% names(elementMassList))) {
-    print("stop")
+    stop("missing element in elementMassList")
   }
 
   # exact mass calculation
   exactMass <- 0
 
+  # iterate over all elements of the formula
   for(i in 1:length(parsedChemFormula)) {
 
     # get element name
@@ -196,32 +213,32 @@ calculateExactMass <- function(chemFormula) {
   return(exactMass)
 }
 
-getElementMass <- function(element) {
 
-}
-
+#'
+#'
+#'
 getElementMassList <- function() {
 
   # make list with element masses
   elementMassList <- list(
     # CHONSP
     "C" = 12.00000,
-    "H" = 1.007825,
+    "H" =  1.007825,
     "O" = 15.994915,
     "N" = 14.003074,
     "S" = 31.972071,
     "P" = 30.973762,
 
     # halogens
-    "Cl" = 34.968853,
-    "Br" = 78.918338,
-    "F" = 18.998403,
-    "I" = 126.904472,
+    "Cl" =  34.968853,
+    "Br" =  78.918338,
+    "F"  =  18.998403,
+    "I"  = 126.904472,
 
     # metals
-    "Li" = 6.015123,
+    "Li" =  6.015123,
     "Na" = 22.989769,
-    "K" = 38.963706,
+    "K"  = 38.963706,
     "Mg" = 23.985042,
     "Ca" = 39.962591,
     "Mn" = 54.938044,
@@ -238,3 +255,133 @@ getElementMassList <- function() {
   return(elementMassList)
 
 }
+
+
+#' function to get the differences between monoisotope and isotope
+#'
+#'
+getIsotopeAddList <- function() {
+
+  # make list with differences between monoisotope and isotope
+  isotopeDiffList <- list(
+    #CHONS
+    "C" = 13.003355 - 12.000000,
+    "D" =  2.014102 -  1.007825,
+    "T" =  3.016049 -  1.007825,
+    "O" = 17.999160 - 15.994915,
+    "N" = 15.000109 - 14.003074,
+    "S" = 33.967867 - 31.972071
+  )
+
+  # return list
+  return(isotopeDiffList)
+}
+
+#'
+#'
+#' @export
+getIsotopeNameList <- function() {
+  return(names(getIsotopeMassList()))
+}
+
+#'
+#'
+#'
+getIsotopeMassList <- function() {
+
+  # make list with isotopes for labeling experiments
+  isotopeLabelList <- list(
+    #CHONS
+    "C" = 13.003355,
+    "D" =  2.014102,
+    "T" =  3.016049,
+    "O" = 17.999160,
+    "N" = 15.000109,
+    "S" = 33.967867
+  )
+
+  # return list
+  return(isotopeLabelList)
+}
+
+
+#'
+#'
+#'
+calculateIsoLabelMass_Formula <- function(chemFormula, labeledElement, noOfLabel = NULL) {
+
+  #parse chemical formula
+  parsedChemFormula <- parseChemFormula(chemFormula)
+
+  #check if all elements are present in element mass list
+  elementMassList <- getElementMassList()
+
+  if(!all(names(parsedChemFormula) %in% names(elementMassList))) {
+    stop("missing element in elementMassList")
+  }
+
+  # check if labels are available
+  isotopeMassList <- getIsotopeMassList()
+
+  if(!labeledElement %in% names(isotopeMassList)) {
+    stop("labeled element not available")
+  }
+
+  isoMass <- 0
+
+  # iterate over all elements of the formula
+  for(i in 1:length(parsedChemFormula)) {
+
+    # get element name
+    element <- names(parsedChemFormula[i])
+
+    # make switch for deuterium and tritium
+    if(element == "H" & labeledElement %in% c("D", "T")) {
+
+      if(!is.null(noOfLabel) && noOfLabel > parsedChemFormula[[i]]) {
+
+        isoMass <- isoMass + parsedChemFormula[[i]] * as.numeric(isotopeMassList[labeledElement])
+
+      } else if(!is.null(noOfLabel) && noOfLabel < parsedChemFormula[[i]]) {
+
+        isoMass <- isoMass + (parsedChemFormula[[i]] - noOfLabel) * as.numeric(elementMassList[element])
+        isoMass <- isoMass + noOfLabel * as.numeric(isotopeMassList[labeledElement])
+
+      } else {
+
+        isoMass <- isoMass + parsedChemFormula[[i]] * as.numeric(isotopeMassList[element])
+
+      }
+
+    } else {
+
+      if(element == labeledElement) {
+
+        if(!is.null(noOfLabel) && noOfLabel > parsedChemFormula[[i]]) {
+
+          isoMass <- isoMass + parsedChemFormula[[i]] * as.numeric(isotopeMassList[element])
+
+        } else if(!is.null(noOfLabel) && noOfLabel < parsedChemFormula[[i]]) {
+
+          isoMass <- isoMass + (parsedChemFormula[[i]] - noOfLabel) * as.numeric(elementMassList[element])
+          isoMass <- isoMass + noOfLabel * as.numeric(isotopeMassList[element])
+
+        } else {
+
+          isoMass <- isoMass + parsedChemFormula[[i]] * as.numeric(isotopeMassList[element])
+
+        }
+
+      } else {
+
+        isoMass <- isoMass + parsedChemFormula[[i]] * as.numeric(elementMassList[element])
+
+      }
+    }
+  }
+
+  # return calculated isomass
+  return(isoMass)
+
+}
+
