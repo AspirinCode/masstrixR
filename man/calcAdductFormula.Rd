@@ -4,7 +4,12 @@
 \alias{calcAdductFormula}
 \title{This function generates the formula of a pseudomolecular ion from a chemical formula and the type of adduct selected.}
 \usage{
-calcAdductFormula(molecularFormula, adduct)
+calcAdductFormula(chemFormula, adduct)
+}
+\arguments{
+\item{chemFormula}{Single string with chemical formula}
+
+\item{adduct}{Adduct shorthand notation according to <code>masstrixR</code> notation.}
 }
 \value{
 Returns a string with the ion formula
@@ -13,5 +18,5 @@ Returns a string with the ion formula
 This function generates the formula of a pseudomolecular ion from a chemical formula and the type of adduct selected.
 }
 \examples{
-ionFormula <- calcAdductFormula("C6H12O6", "M+H")
+ionFormula <- calcAdductFormula("C6H12O6", "[M+H]+")
 }

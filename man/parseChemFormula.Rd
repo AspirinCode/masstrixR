@@ -6,6 +6,9 @@
 \usage{
 parseChemFormula(chemFormula)
 }
+\arguments{
+\item{chemFormula}{Single string with chemical formula}
+}
 \value{
 Named vector with all elements
 }

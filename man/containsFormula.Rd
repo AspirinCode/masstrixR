@@ -6,6 +6,11 @@
 \usage{
 containsFormula(targetFormula, queryFormula)
 }
+\arguments{
+\item{targetFormula}{Single string with chemical formula}
+
+\item{queryFormula}{Single string with chemical formula that should be contained in the targetFormula}
+}
 \value{
 TRUE or FALSE
 }

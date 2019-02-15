@@ -2,10 +2,19 @@
 % Please edit documentation in R/Utils_Formula.R
 \name{calculateExactMass}
 \alias{calculateExactMass}
-\title{calculate mass}
+\title{This function calculates the exact mass from a given sum formula.}
 \usage{
 calculateExactMass(chemFormula)
 }
+\arguments{
+\item{chemFormula}{Single string with chemical formula}
+}
+\value{
+calculated exact mass
+}
 \description{
-calculate mass
+This function calculates the exact mass from a given sum formula.
+}
+\examples{
+calculateExactMass("C6H12O6")
 }

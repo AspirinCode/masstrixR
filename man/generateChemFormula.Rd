@@ -6,6 +6,9 @@
 \usage{
 generateChemFormula(parsedChemFormula)
 }
+\arguments{
+\item{parsedChemFormula}{Named list containing the elements as names and their abudance as values}
+}
 \value{
 Single string with chemical formula
 }
@@ -13,5 +16,8 @@ Single string with chemical formula
 This function generates a chemical formula from a named vector of elemental counts
 }
 \examples{
-parseChemFormula("C6H12O6")
+formula <- list("C" = 6,
+                "H" = 12,
+                "O" = 6)
+generateChemFormula(formula)
 }

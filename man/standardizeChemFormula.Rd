@@ -2,10 +2,19 @@
 % Please edit documentation in R/Utils_Formula.R
 \name{standardizeChemFormula}
 \alias{standardizeChemFormula}
-\title{standardize formula}
+\title{This function standardizes a supplied chemical formula according to the Hill notation system.}
 \usage{
 standardizeChemFormula(chemFormula)
 }
+\arguments{
+\item{chemFormula}{Single string with chemical formula}
+}
+\value{
+Single string with standardized chemical formua
+}
 \description{
-standardize formula
+This function standardizes a supplied chemical formula according to the Hill notation system.
+}
+\examples{
+standardizeChemFormula("O6C6H12")
 }

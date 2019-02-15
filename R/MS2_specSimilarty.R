@@ -2,12 +2,12 @@
 #'
 #'
 #' @export
-forwardDotProduct <- function(x, y, align = FALSE, mzTol = 0.005, treshold = 0.01, ...) {
+forwardDotProduct <- function(x, y, align = FALSE, mzTol = 0.005, mzTolType = "abs", binwidth = 1L, ...) {
 
   if(align) {
 
     #use aligned spectra
-    alignedSpectra <- alignSpectra(x, y, mzTol = mzTol, treshold = treshold)
+    alignedSpectra <- alignSpectra(x, y, mzTol = mzTol, mzTolType = mzTolType)
 
     # calculate dot product
     dotproduct <- dotproduct(alignedSpectra$intensity.top, alignedSpectra$intensity.bottom)
@@ -19,27 +19,26 @@ forwardDotProduct <- function(x, y, align = FALSE, mzTol = 0.005, treshold = 0.0
 
     # use binned spectra
     binnedSpectra <- bin_Spectra(x, y, ...)
-    inten <- as.data.frame(lapply(binnedSpectra, intensity))
-    names(inten) <- c("spec1", "spec2")
 
     # calculate dot product
-    dotproduct <- dotproduct(inten$spec1, inten$spec2)
+    dotproduct <- dotproduct(binnedSpectra$intensity.top, binnedSpectra$intensity.bottom)
 
     # return result
     return(dotproduct)
   }
 }
 
+
 #' Calculate reverse Dotproduct
 #'
 #'
 #' @export
-reverseDotProduct <- function(x, y, align = FALSE, mzTol = 0.005, treshold = 0.01, ...) {
+reverseDotProduct <- function(x, y, align = FALSE, mzTol = 0.005, mzTolType = "abs", binwidth = 1L, ...) {
 
   if(align) {
 
     #use aligned spectra
-    alignedSpectra <- alignSpectra(x, y, mzTol = mzTol, treshold = treshold)
+    alignedSpectra <- alignSpectra(x, y, mzTol = mzTol, mzTolType = mzTolType)
 
     # use only peals with are present in spec2
     alignedSpectra <- alignedSpectra[which(alignedSpectra$intensity.bottom >0), ]
@@ -54,14 +53,12 @@ reverseDotProduct <- function(x, y, align = FALSE, mzTol = 0.005, treshold = 0.0
 
     # use binned spectra
     binnedSpectra <- bin_Spectra(x, y, ...)
-    inten <- as.data.frame(lapply(binnedSpectra, intensity))
-    names(inten) <- c("spec1", "spec2")
 
     # use only peals with are present in spec2
-    inten <- inten[which(inten$spec2 > 0),]
+    binnedSpectra <- binnedSpectra[which(binnedSpectra$intensity.bottom >0), ]
 
     # calculate dot product
-    dotproduct <- dotproduct(inten$spec1, inten$spec2)
+    dotproduct <- dotproduct(binnedSpectra$intensity.top, binnedSpectra$intensity.bottom)
 
     # return result
     return(dotproduct)
@@ -73,28 +70,26 @@ reverseDotProduct <- function(x, y, align = FALSE, mzTol = 0.005, treshold = 0.0
 #'
 #'
 #' @export
-commonPeaks <- function(x, y, align = FALSE, mzTol = 0.005, treshold = 0.01, ...) {
+commonPeaks <- function(x, y, align = FALSE, mzTol = 0.005, mzTolType = "abs", binwidth = 1L, ...) {
 
   if(align) {
 
     #use aligned spectra
-    alignedSpectra <- alignSpectra(x, y, mzTol = mzTol, treshold = treshold)
+    alignedSpectra <- alignSpectra(x, y, mzTol = mzTol, mzTolType = mzTolType)
 
     commonPeaks <- nrow(alignedSpectra[which(alignedSpectra$intensity.top > 0 & alignedSpectra$intensity.bottom > 0),])
 
+    # return number of common peaks
     return(commonPeaks)
-
-
 
   } else {
 
     # use binned spectra
     binnedSpectra <- bin_Spectra(x, y, ...)
-    inten <- as.data.frame(lapply(binnedSpectra, intensity))
-    names(inten) <- c("spec1", "spec2")
 
-    commonPeaks <- nrow(inten[which(inten$spec1 > 0 & inten$spec2 > 0),])
+    commonPeaks <- nrow(binnedSpectra[which(binnedSpectra$intensity.top > 0 & binnedSpectra$intensity.bottom > 0),])
 
+    # return number of common peak
     return(commonPeaks)
 
   }
@@ -107,6 +102,8 @@ commonPeaks <- function(x, y, align = FALSE, mzTol = 0.005, treshold = 0.01, ...
 #'
 massShiftForwadDotProduct <- function() {
 
+  # TODO implement massshift alignment
+
 }
 
 #' XRank
@@ -115,6 +112,8 @@ massShiftForwadDotProduct <- function() {
 #'
 #'
 xRank <- function() {
+
+  # TODO implement xRank function
 
 }
 

@@ -9,7 +9,7 @@ makeMirrorPlot <- function(x, y, align = FALSE, plotIt = FALSE, mzTol = 0.005, t
   if(align) {
 
     #use aligned spectra
-    alignedSpectra <- alignSpectra(x, y, mzTol = mzTol, treshold = treshold)
+    alignedSpectra <- alignSpectra(x, y, mzTol = mzTol)
     commonPeaks <- alignedSpectra[which(alignedSpectra$intensity.top > 0 & alignedSpectra$intensity.bottom > 0),]
 
     noPeaks_x <- length(mz(x))

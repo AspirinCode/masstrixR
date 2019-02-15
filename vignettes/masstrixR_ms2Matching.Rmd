@@ -16,6 +16,7 @@ blablabla
 ```{r make example db}
 # load required library
 library(masstrixR)
+library(MSnbase)
 
 # get example file from package
 pathToMbRecords <- system.file("extdata", "exampleData\\Celegans_ms2\\MassBankRecords", package = 'masstrixR')
@@ -74,14 +75,11 @@ for(i in 1:length(ms2spectra)) {
         title <- paste0("forward: ", round(forward * 1000, 0), "/ reverse: ", round(reserve * 1000, 0))
         
         #plot(ms2spectra[[i]], searchResult[[j]])
-        p1 <- makeMirrorPlot(ms2spectra[[i]], searchResult[[j]], align = TRUE, mzTol = 0.005, title = title)
-        if(!is.null(p1)) {
-          plot(p1)
-        }
+        makeMirrorPlot(ms2spectra[[i]], searchResult[[j]], align = TRUE, mzTol = 0.005, title = title, plotIt = TRUE)
       }
   }
 }
 
 
-plotSpectrum(ms2spectra[[3]], highlight = TRUE, highlightMz = c(69.0667))
+plotSpectrum(ms2spectra[[3]], highlight = TRUE, highlightMz = c(69.0667),  plotIt = TRUE)
 ```

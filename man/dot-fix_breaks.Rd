@@ -2,10 +2,10 @@
 % Please edit documentation in R/Utils_SpectrumFunctions.R
 \name{.fix_breaks}
 \alias{.fix_breaks}
-\title{function to fix breaks}
+\title{function to fix breaks (based on MSnbase)}
 \usage{
 .fix_breaks(brks, rng)
 }
 \description{
-function to fix breaks
+function to fix breaks (based on MSnbase)
 }

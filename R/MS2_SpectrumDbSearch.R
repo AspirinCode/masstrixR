@@ -54,6 +54,7 @@ searchByPrecursor <- function(precursorMz, ms2dbFileName, mzTol = 0.005, mzTolTy
 
   # fetch result set into a dataframe and check if an annotation was found
   ids <- DBI::dbFetch(resultSet)
+  DBI::dbClearResult(resultSet)
 
   # create new Spectra object to store results
   librarySearchResults <- new("Spectra")
@@ -83,7 +84,6 @@ searchByPrecursor <- function(precursorMz, ms2dbFileName, mzTol = 0.005, mzTolTy
     # clear results from search
     DBI::dbClearResult(massSpecRs)
 
-    # TODO: fix this to return values of above
     # make Spectrum2 oboject from data
     ms2spec <- new("Spectrum2",
                    merged = 0,
@@ -135,7 +135,7 @@ searchByPrecursor <- function(precursorMz, ms2dbFileName, mzTol = 0.005, mzTolTy
 #' @param queryResults A Spectra object containing the results from a DB search
 #'
 #' @export
-createResultsSet <- function(querySpectrum, queryResults, align = TRUE, mzTol = 0.005, treshold = 1,
+createResultsSet <- function(querySpectrum, queryResults, align = TRUE, mzTol = 0.005, mzTolType = "abs",
                              plotIt = TRUE, storePlot = FALSE, prefix = "", dataPath = "", title = NA) {
 
   # create empty data for results
@@ -146,15 +146,15 @@ createResultsSet <- function(querySpectrum, queryResults, align = TRUE, mzTol = 
     # perform spectral matching
     # forward matching
     forwardScore <- forwardDotProduct(querySpectrum, queryResults[[i]],
-                                     align = align, mzTol = mzTol, treshold = treshold)
+                                     align = align, mzTol = mzTol, mzTolType = mzTolType)
 
     # reverse matching
     reverseScore <- reverseDotProduct(querySpectrum, queryResults[[i]],
-                                     align = align, mzTol = mzTol, treshold = treshold)
+                                     align = align, mzTol = mzTol, mzTolType = mzTolType)
 
     # number of common peaks
     matchingPeaks <- commonPeaks(querySpectrum, queryResults[[i]],
-                                 align = align, mzTol = mzTol, treshold = treshold)
+                                 align = align, mzTol = mzTol, mzTolType = mzTolType)
 
     noPeaks_querySpectrum <- length(mz(querySpectrum))
     noPeaks_queryResult <- length(mz(queryResults[[i]]))

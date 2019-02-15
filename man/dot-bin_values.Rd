@@ -2,11 +2,11 @@
 % Please edit documentation in R/Utils_SpectrumFunctions.R
 \name{.bin_values}
 \alias{.bin_values}
-\title{binngin function}
+\title{binning function (based on MSnbase)}
 \usage{
 .bin_values(x, toBin, binSize = 1, breaks = seq(floor(min(toBin)),
   ceiling(max(toBin)), by = binSize), fun = max)
 }
 \description{
-binngin function
+binning function (based on MSnbase)
 }

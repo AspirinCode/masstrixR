@@ -1,4 +1,9 @@
+#' This function allows to search for a specific product ion in MS2 spectra
 #'
+#' @param ms2spectrum A Spectrum2 in which the production ion shall be searched
+#' @param productIonMz m/z value of product ion that shall be search for
+#' @param mzTol Maximum allowed tolerance in Da or ppm
+#' @param mzTolType Defines the error type for m/z search, "abs" is used for absolute mass error, "ppm" for relative error
 #'
 #' @import MSnbase
 #' @export
@@ -28,6 +33,12 @@ containsProductIon <- function(ms2spectrum, productIonMz, mzTol = 0.005, mzTolTy
 
 }
 
+#' This function allows to search for a fragment m/z in MS2 spectra that match to a specified neutral from the precusor
+#'
+#' @param ms2spectrum A Spectrum2 in which the production ion shall be searched
+#' @param neutralLossMass Mass of neutral loss that shal be searched
+#' @param mzTol Maximum allowed tolerance in Da or ppm
+#' @param mzTolType Defines the error type for m/z search, "abs" is used for absolute mass error, "ppm" for relative error
 #'
 #' @import MSnbase
 #' @export
@@ -60,7 +71,12 @@ containsNeutralLossIon <- function(ms2spectrum, neutralLossMass, mzTol = 0.005, 
 
 }
 
+#' This function allows to search for a specific mass difference between two fragments
 #'
+#' @param ms2spectrum A Spectrum2 in which the production ion shall be searched
+#' @param fragmentMassDifference Mass of neutral loss that shal be searched
+#' @param mzTol Maximum allowed tolerance in Da or ppm
+#' @param mzTolType Defines the error type for m/z search, "abs" is used for absolute mass error, "ppm" for relative error
 #' @import MSnbase
 #' @export
 containsFragmentDifference <- function(ms2spectrum, fragmentMassDifference, mzTol = 0.005, mzTolType = "abs") {
@@ -93,7 +109,113 @@ containsFragmentDifference <- function(ms2spectrum, fragmentMassDifference, mzTo
 
 }
 
-
+# remove???
 findCommonFragments <- function() {
 
 }
+
+#'
+#' @import MSnbase
+#' @export
+makeDiffSpectra <- function(x, y, align = TRUE, mzTol = 0.005, mzTolType = "abs", binwidth = 1L, ...) {
+
+  if(align) {
+
+    #use aligned spectra
+    alignedSpectra <- alignSpectra(x, y, mzTol = mzTol, mzTolType = mzTolType)
+
+    # select only unique peaks
+    uniquePeaks <- alignedSpectra[-which(alignedSpectra$intensity.top > 0 & alignedSpectra$intensity.bottom > 0),]
+
+    # make Spectrum2 oboject from data
+    diffSpec <- new("Spectrum2",
+                   merged = 0,
+                   precScanNum = as.integer(1),
+                   precursorMz = precursorMz(x),
+                   precursorIntensity = 100,
+                   precursorCharge = precursorCharge(x),
+                   mz = uniquePeaks$mz,
+                   intensity = uniquePeaks$intensity.top,
+                   collisionEnergy = collisionEnergy(x),
+                   centroided = TRUE)
+
+    # return updated spectrum
+    return(diffSpec)
+
+  } else {
+
+    # use binned spectra
+    binnedSpectra <- bin_Spectra(x, y, ...)
+
+    # select only unique peaks
+    uniquePeaks <- binnedSpectra[-which(binnedSpectra$intensity.top > 0 & binnedSpectra$intensity.bottom > 0),]
+
+    # make Spectrum2 oboject from data
+    diffSpec <- new("Spectrum2",
+                    merged = 0,
+                    precScanNum = as.integer(1),
+                    precursorMz = precursorMz(x),
+                    precursorIntensity = 100,
+                    precursorCharge = precursorCharge(x),
+                    mz = uniquePeaks$mz,
+                    intensity = uniquePeaks$intensity.top,
+                    collisionEnergy = collisionEnergy(x),
+                    centroided = TRUE)
+
+    # return updated spectrum
+    return(diffSpec)
+
+  }
+
+}
+
+#'
+#' @import MSnbase
+#' @import xcms
+#' @export
+filterIsotopePeaks <- function(x, mzTol = 0.005, mzTolType = "abs") {
+
+  #create matrix for xcmsSet
+  mat<-matrix(0,ncol=12,nrow=length(mz(x)))
+
+  colnames(mat)<-c("mz","mzmin","mzmax","rt","rtmin","rtmax","into","intf","maxo","maxf","i","sn")
+  mat[,"mz"]<-mz(x)
+  mat[,"into"]<-intensity(x)
+  mat[,"rt"]<-1
+  mat[,"rtmin"]<-mat[,"rt"]-0.1
+  mat[,"intf"]<-intensity(x)
+  mat[,"rtmax"]<-mat[,"rt"]+0.1
+
+  #make new xcmsSEt
+  test<-new("xcmsSet")
+  peaks(test)<-mat
+  sampnames(test)<-c("samp1")
+  test@filepaths="test"
+
+  # peform CAMERA based annotation
+  xa <- CAMERA::xsAnnotate(test)
+  xa <- CAMERA::groupFWHM(xa)
+  xa <- CAMERA::findIsotopes(xa,intval="into",mzabs=mzTol,filter=F)
+
+  # get spectra an filter values
+  spec <- CAMERA::getpspectra(xa,1)[,c("mz","into","isotopes")]
+
+  spec <- spec[-grep("M\\+", spec[,3]),]
+
+  # make Spectrum2 oboject from data
+  cleanedSpec <- new("Spectrum2",
+                     merged = 0,
+                     precScanNum = as.integer(1),
+                     precursorMz = precursorMz(x),
+                     precursorIntensity = 100,
+                     precursorCharge = precursorCharge(x),
+                     mz = spec[,1],
+                     intensity = spec[,2],
+                     collisionEnergy = collisionEnergy(x),
+                     centroided = TRUE)
+
+  # return isotope cleaned spectrum
+  return(cleanedSpec)
+}
+
+
