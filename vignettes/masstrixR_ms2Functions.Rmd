@@ -29,7 +29,7 @@ ms2spectra <- Spectra(spectra(filterMsLevel(ms2data, msLevel = 2)))
 
 # working with logical statements for fragments
 mcols(ms2spectra)$waterLoss <- unlist(lapply(ms2spectra, containsNeutralLossIon, neutralLossMass = 18.010565))
-mcols(ms2spectra)$c17sphingoid <- unlist(lapply(ms2spectra, containsProductIon, productIonMz = 250.2529))
+mcols(ms2spectra)$c17sphingoid <- unlist(lapply(ms2spectra, containsProductIon, productIonMz = c(250.2529, 268.2635, 238.2530), multiplePi = "all"))
 mcols(ms2spectra)$c27ohFa <- unlist(lapply(ms2spectra, containsFragmentDifference, fragmentMassDifference = 392.401816))
 
 # check the invidual columns

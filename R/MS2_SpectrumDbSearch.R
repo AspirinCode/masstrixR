@@ -164,7 +164,7 @@ createResultsSet <- function(querySpectrum, queryResults, align = TRUE, mzTol = 
                       queryResults[i]@elementMetadata$name,
                       ", forward: ",
                       round(forwardScore * 1000, 0),
-                      "/ reverse: ",
+                      " / reverse: ",
                       round(forwardScore * 1000, 0))
     }
 

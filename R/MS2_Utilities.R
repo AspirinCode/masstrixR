@@ -7,25 +7,55 @@
 #'
 #' @import MSnbase
 #' @export
-containsProductIon <- function(ms2spectrum, productIonMz, mzTol = 0.005, mzTolType = "abs") {
+containsProductIon <- function(ms2spectrum, productIonMz, mzTol = 0.005, mzTolType = "abs", multiplePi = "any") {
 
   # get mz values to search in
   mz <- mz(ms2spectrum)
 
   containsPi <- FALSE
 
-  if(mzTolType == "abs") {
+  # check if multiple masses are defined
+  if(length(productIonMz) > 1) {
 
-    containsPi <- any(abs(mz - productIonMz) < mzTol)
+    # generate list of checks
+    booleanVec <- unlist(lapply(productIonMz, function(x, y) {
+      if(mzTolType == "abs") {
 
-  } else if(mzTolType == "ppm") {
+        any(abs(x - y) < mzTol)
 
-    containsPi <- any(abs((mz - productIonMz) / productIonMz * 1e6) < mzTol)
+      } else if(mzTolType == "ppm") {
+
+        any(abs((x - y) / y * 1e6) < mzTol)
+
+      }
+    }, y = mz))
+
+    if(multiplePi == "any") {
+
+      containsPi <- any(booleanVec)
+
+    } else if(multiplePi == "all") {
+
+      containsPi <- all(booleanVec)
+
+    }
 
   } else {
 
-    stop("unknown mzTolType")
+    # search for single mass
+    if(mzTolType == "abs") {
 
+      containsPi <- any(abs(mz - productIonMz) < mzTol)
+
+    } else if(mzTolType == "ppm") {
+
+      containsPi <- any(abs((mz - productIonMz) / productIonMz * 1e6) < mzTol)
+
+    } else {
+
+      stop("unknown mzTolType")
+
+    }
   }
 
   #return result
@@ -204,15 +234,15 @@ filterIsotopePeaks <- function(x, mzTol = 0.005, mzTolType = "abs") {
 
   # make Spectrum2 oboject from data
   cleanedSpec <- new("Spectrum2",
-                     merged = 0,
-                     precScanNum = as.integer(1),
+                     merged = merged(x),
+                     precScanNum = scanIndex(x),
                      precursorMz = precursorMz(x),
-                     precursorIntensity = 100,
+                     precursorIntensity = precursorIntensity(x),
                      precursorCharge = precursorCharge(x),
                      mz = spec[,1],
                      intensity = spec[,2],
                      collisionEnergy = collisionEnergy(x),
-                     centroided = TRUE)
+                     centroided = centroided(x))
 
   # return isotope cleaned spectrum
   return(cleanedSpec)
