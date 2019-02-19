@@ -95,7 +95,7 @@ makeMirrorPlot <- function(x, y, align = FALSE, plotIt = FALSE, mzTol = 0.005, t
 #' @import ggplot2
 #' @import grid
 #' @export
-plotSpectrum <- function(x, highlight = FALSE, highlightMz = NULL, mzTol = 0.005, plotIt = FALSE, ...) {
+plotSpectrum <- function(x, highlight = FALSE, highlightMz = NULL, mzTol = 0.005, plotIt = FALSE, xlim = NULL, ...) {
 
   # check for class
   if(class(x) == "Spectra") {
@@ -119,6 +119,11 @@ plotSpectrum <- function(x, highlight = FALSE, highlightMz = NULL, mzTol = 0.005
     alignedSpectra <- alignSpectra(highlightSpectrum, x, mzTol = mzTol)
     commonPeaks <- alignedSpectra[which(alignedSpectra$intensity.top > 0 & alignedSpectra$intensity.bottom > 0),]
 
+    # check xlim
+    if(is.null(xlim)) {
+      xlim <- c(min(alignedSpectra$mz) - 5, max(alignedSpectra$mz) + 5)
+    }
+
     if(nrow(commonPeaks) > 0) {
 
       p1 <- ggplot() +
@@ -133,7 +138,7 @@ plotSpectrum <- function(x, highlight = FALSE, highlightMz = NULL, mzTol = 0.005
         ggtitle(paste0("Precursor m/z: ", round(precursorMz(x), 4), " / Common Peaks: ", nrow(commonPeaks))) +
 
         # scaling
-        scale_x_continuous(limits = c(min(alignedSpectra$mz) - 5, max(alignedSpectra$mz) + 5)) +
+        scale_x_continuous(limits = xlim) +
         scale_y_continuous(breaks = c(0, 50, 100)) +
 
         # axis
@@ -159,7 +164,7 @@ plotSpectrum <- function(x, highlight = FALSE, highlightMz = NULL, mzTol = 0.005
         ggtitle(paste0("Precursor m/z: ", round(precursorMz(x), 4))) +
 
         # scaling
-        scale_x_continuous(limits = c(min(alignedSpectra$mz) - 5, max(alignedSpectra$mz) + 5)) +
+        scale_x_continuous(limits = xlim) +
         scale_y_continuous(breaks = c(0, 50, 100)) +
 
         # axis
@@ -189,7 +194,7 @@ plotSpectrum <- function(x, highlight = FALSE, highlightMz = NULL, mzTol = 0.005
       ggtitle(paste0("Precursor m/z: ", round(precursorMz(x), 4))) +
 
       # scaling
-      scale_x_continuous(limits = c(min(alignedSpectra$mz) - 5, max(alignedSpectra$mz) + 5)) +
+      scale_x_continuous(limits = xlim) +
       scale_y_continuous(breaks = c(0, 50, 100)) +
 
       # axis
