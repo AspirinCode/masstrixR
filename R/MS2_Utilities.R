@@ -200,20 +200,20 @@ makeDiffSpectra <- function(x, y, align = TRUE, mzTol = 0.005, mzTolType = "abs"
 }
 
 #'
-#' @import MSnbase
+#'
 #' @import xcms
-#' @export
-filterIsotopePeaks <- function(x, mzTol = 0.005, mzTolType = "abs") {
+#'
+filterIsotopePeaks <- function(mz, int, mzTol = 0.005, mzTolType = "abs") {
 
   #create matrix for xcmsSet
-  mat<-matrix(0,ncol=12,nrow=length(mz(x)))
+  mat<-matrix(0,ncol=12,nrow=length(mz))
 
   colnames(mat)<-c("mz","mzmin","mzmax","rt","rtmin","rtmax","into","intf","maxo","maxf","i","sn")
-  mat[,"mz"]<-mz(x)
-  mat[,"into"]<-intensity(x)
+  mat[,"mz"]<-mz
+  mat[,"into"]<-int
   mat[,"rt"]<-1
   mat[,"rtmin"]<-mat[,"rt"]-0.1
-  mat[,"intf"]<-intensity(x)
+  mat[,"intf"]<-int
   mat[,"rtmax"]<-mat[,"rt"]+0.1
 
   #make new xcmsSEt
@@ -225,27 +225,80 @@ filterIsotopePeaks <- function(x, mzTol = 0.005, mzTolType = "abs") {
   # peform CAMERA based annotation
   xa <- CAMERA::xsAnnotate(test)
   xa <- CAMERA::groupFWHM(xa)
-  xa <- CAMERA::findIsotopes(xa,intval="into",mzabs=mzTol,filter=F)
+
+  if(mzTolType == "abs") {
+
+    xa <- CAMERA::findIsotopes(xa, intval="into", mzabs=mzTol, filter=F)
+
+  } else if(mzTolType == "ppm") {
+
+    xa <- CAMERA::findIsotopes(xa, intval="into", ppm=mzTol, filter=F)
+
+  } else {
+    stop("Unknown mzTolType")
+  }
+
 
   # get spectra an filter values
   spec <- CAMERA::getpspectra(xa,1)[,c("mz","into","isotopes")]
 
   spec <- spec[-grep("M\\+", spec[,3]),]
 
-  # make Spectrum2 oboject from data
+  mz <- spec[,1]
+  int <- spec[,2]
+
+  # return isotope cleaned spectrum
+  return(list(mz, int))
+}
+
+#'
+#'
+#' @export
+cleanSpectra <- function(x, cleanFunction = "removeAbovePrecursor", treshold, precursorDistance = 5, mzTol = 0.005, mzTolType = "abs") {
+
+  # get values
+  mz <- mz(x)
+  int <- intensity(x)
+
+  # switch function
+  if(cleanFunction == "removeAbovePrecursor") {
+
+    # filter values
+    mz <- mz[mz < precursorMz(x) + precursorDistance]
+    int <- int[mz < precursorMz(x) + precursorDistance]
+
+  } else if(cleanFunction == "tresholdFiltering") {
+
+    # filter values
+    mz <- mz[int / max(int) * 100 > treshold]
+    int <- int[int / max(int) * 100 > treshold]
+
+  } else if(cleanFunction == "isotopeFiltering") {
+
+    # filter values
+    filteredSpec <- filterIsotopePeaks(mz, int, mzTol = mzTol, mzTolType = mzTolType)
+    mz <- filteredSpec[[1]]
+    int <- filteredSpec[[2]]
+
+  } else {
+
+    stop("Unknown cleanFunction")
+
+  }
+
+  # make new Spectrum2
   cleanedSpec <- new("Spectrum2",
-                     merged = merged(x),
+                     merged = x@merged,
                      precScanNum = scanIndex(x),
                      precursorMz = precursorMz(x),
                      precursorIntensity = precursorIntensity(x),
                      precursorCharge = precursorCharge(x),
-                     mz = spec[,1],
-                     intensity = spec[,2],
+                     mz = mz,
+                     intensity = int,
                      collisionEnergy = collisionEnergy(x),
                      centroided = centroided(x))
 
-  # return isotope cleaned spectrum
+  # return cleaned spectra
   return(cleanedSpec)
+
 }
-
-

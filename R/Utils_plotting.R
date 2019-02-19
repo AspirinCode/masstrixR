@@ -4,7 +4,7 @@
 #' @import ggplot2
 #' @import grid
 #' @export
-makeMirrorPlot <- function(x, y, align = FALSE, plotIt = FALSE, mzTol = 0.005, treshold = 0.01, title = "Mirrorplot", ...) {
+makeMirrorPlot <- function(x, y, align = FALSE, plotIt = FALSE, mzTol = 0.005, treshold = 0.01, title = "Mirrorplot", xlim = NULL, ...) {
 
   if(align) {
 
@@ -14,6 +14,11 @@ makeMirrorPlot <- function(x, y, align = FALSE, plotIt = FALSE, mzTol = 0.005, t
 
     noPeaks_x <- length(mz(x))
     noPeaks_y <- length(mz(y))
+
+    # check xlim
+    if(is.null(xlim)) {
+      xlim <- c(min(alignedSpectra$mz) - 5, max(alignedSpectra$mz) + 5)
+    }
 
     if(nrow(commonPeaks) > 0) {
 
@@ -35,7 +40,7 @@ makeMirrorPlot <- function(x, y, align = FALSE, plotIt = FALSE, mzTol = 0.005, t
         ggtitle(title) +
 
         # scaling
-        scale_x_continuous(limits = c(min(alignedSpectra$mz) - 5, max(alignedSpectra$mz) + 5)) +
+        scale_x_continuous(limits = xlim) +
         scale_y_continuous(breaks = c(-100, -50, 0, 50, 100)) +
 
         # axis
@@ -67,7 +72,7 @@ makeMirrorPlot <- function(x, y, align = FALSE, plotIt = FALSE, mzTol = 0.005, t
         ggtitle(title) +
 
         # scaling
-        scale_x_continuous(limits = c(min(alignedSpectra$mz) - 5, max(alignedSpectra$mz) + 5)) +
+        scale_x_continuous(limits = xlim) +
         scale_y_continuous(breaks = c(-100, -50, 0, 50, 100)) +
 
         # axis
