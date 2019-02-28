@@ -2,7 +2,7 @@
 % Please edit documentation in R/MS1_Utilities.R
 \name{matchMz}
 \alias{matchMz}
-\title{This function is used to match two masses from the positive and negative ionization mode to check it they are potentially derived from the same metabolite. Based on the given adducts, all combinations are tested from positive to negative ion mode and the other way. If for both cases the mass error is below the given mass error it is assumed that the masses are derived from the same metabolite.}
+\title{Checking masses from different ion modes}
 \usage{
 matchMz(posMz, negMz, posAdducts, negAdducts, mzTol = 0.005,
   mzTolType = "abs")

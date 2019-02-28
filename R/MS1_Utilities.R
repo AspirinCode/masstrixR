@@ -1,3 +1,5 @@
+#' Checking masses from different ion modes
+#'
 #' This function is used to match two masses from the positive and negative ionization mode to check it they are potentially derived from the same metabolite. Based on the given adducts, all combinations are tested from positive to negative ion mode and the other way. If for both cases the mass error is below the given mass error it is assumed that the masses are derived from the same metabolite.
 #'
 #' @param posMz m/z value of positive ionization mode
@@ -141,4 +143,84 @@ matchMassDiff <- function(mz1, mz2, mzDiff, mzTol = 0.005, mzTolType = "abs") {
 
   # return result
   return(match)
+}
+
+#' Calculate Kendrick Mass Defect
+#'
+#' This function calculates the Kendrick mass defect (KMD) for a given mass.
+#'
+#' @param mz Mass for which the KMD shall be calculated
+#'
+#' @example
+#' xxx
+#'
+#' @author Michael Witting, \email{michael.witting@@helmholtz-muenchen.de}
+#'
+#' @seealso \code{\link{calculateRefKendrickMassDefect}}
+#' @seealso \code{\link{checkRmkd}}
+#'
+#' @export
+calculateKendrickMassDefect <- function(mz) {
+
+  # calculate KMD
+  kendrickMass <- mz * 14 / 14.01565
+  kmd <- kendrickMass %% 1
+
+  # return Kendrick mass defect
+  return(kmd)
+
+}
+
+#' Calculate referenced Kendrick Mass Defect
+#'
+#' This function calculates a referenced Kendrick Mass Defect (RKMD) for a given mass and a given reference KMD.
+#'
+#' @param mz Mass for which the RKMD shall be calculated
+#' @param refkmd Reference Kendrick Mass Defect
+#'
+#' @examples
+#' xxx
+#'
+#' @author Michael Witting, \email{michael.witting@@helmholtz-muenchen.de}
+#'
+#' @seealso \code{\link{calculateKendrickMassDefect}}
+#' @seealso \code{\link{checkRmkd}}
+#'
+#' @export
+calculateRefKendrickMassDefect <- function(mz, refkmd) {
+
+  # calculate KMD
+  kmd <- calculateKendrickMassDefect(mz)
+
+  # calculate RKMD
+  rmkd <- (kmd - refkmd) / 0.013399
+
+  # return referenced Kendrick mass defect
+  return(rmkd)
+
+}
+
+#' Check if RMKD is negative integer
+#'
+#' This function checks if the RKMD is a negative integer
+#'
+#' @param rmkd calculated RMKD
+#' @param error allowed error margin for RMKD
+#'
+#' @author Michael Witting, \email{michael.witting@@helmholtz-muenchen.de}
+#'
+#' @seealso \code{\link{calculateKendrickMassDefect}}
+#' @seealso \code{\link{calculateRefKendrickMassDefect}}
+#'
+#' @export
+checkRmkd <- function(rmkd, error = 0.15) {
+
+  # check if rmkd is in error range
+  remainder <- rmkd %% -1
+
+  if(abs(remainder) < error | abs(1 + remainder) < error) {
+    return(TRUE)
+  } else {
+    return(FALSE)
+  }
 }

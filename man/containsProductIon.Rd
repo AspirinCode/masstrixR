@@ -5,7 +5,7 @@
 \title{This function allows to search for a specific product ion in MS2 spectra}
 \usage{
 containsProductIon(ms2spectrum, productIonMz, mzTol = 0.005,
-  mzTolType = "abs")
+  mzTolType = "abs", multiplePi = "any")
 }
 \arguments{
 \item{ms2spectrum}{A Spectrum2 in which the production ion shall be searched}
