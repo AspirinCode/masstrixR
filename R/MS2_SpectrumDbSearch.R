@@ -175,7 +175,11 @@ createResultsSet <- function(querySpectrum, queryResults, align = TRUE, mzTol = 
 
     # store plot if TRUE
     if(storePlot) {
-      plotPath <- paste0(dataPath, "\\", prefix, ".png")
+      plotPath <- paste0(dataPath, "\\",
+                         make.names(paste0(prefix,
+                                           "_",
+                                           queryResults[i]@elementMetadata$name),
+                                    ".png"))
       dev.copy(png, plotName, width = 1000, height = 500)
       dev.off()
     }
